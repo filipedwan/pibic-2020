@@ -1,0 +1,7 @@
+dataset/
+
+por_questão_lloc.py
+por_questão_variable.py
+extract_metrics.py
+
+.idea/
