@@ -68,7 +68,9 @@ df = pd.DataFrame(data=dados, columns=['periodo', 'turma_codigo', 'turma_descric
 df.name = 'Turmas por Periodo'
 
 try:
-    os.mkdir('csv')
+    if not os.path.isdir('csv'):
+        os.mkdir('csv')
+
     df.to_csv('csv/turmas_periodo.csv')
 except OSError:
     print("Creation of the directory 'csv' failed")
@@ -76,5 +78,6 @@ except OSError:
     Util.wait_user_input()
 else:
     print("Successfully created the directory 'csv' and outputfiles")
+
 
 print('Erros encontrados: {}'.format(Util.get_total_errors()))
