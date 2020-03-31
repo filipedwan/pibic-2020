@@ -23,8 +23,8 @@ def get_all_semesters(path):
 
     try:
         with os.scandir(
-                path) as entries:   # coleta todas as 'entradas' (arquivos ou pastas) no caminho informado (path).
-            folders = []            # lista que irá guardar todas as pastas encontradas no caminho informado (path).
+                path) as entries:  # coleta todas as 'entradas' (arquivos ou pastas) no caminho informado (path).
+            folders = []  # lista que irá guardar todas as pastas encontradas no caminho informado (path).
             for entry in entries:
                 # entry: name, path, is_dir(), is_file(), stat
                 if entry.is_dir():  # se for uma pasta então corresponde a um período letivo
@@ -52,32 +52,43 @@ def get_all_semesters(path):
     return periodos
 
 
-Util.clear_console()
+def main():
+    Util.clear_console()
 
-# cwd (current working dir): caminho onde está o Dataset do Codebench
-cwd = os.getcwd() + '/dataset/'
+    # cwd (current working dir): caminho onde está o Dataset do Codebench
+    cwd = os.getcwd() + '/dataset/'
 
-lps = get_all_semesters(cwd)
+    periodos = get_all_semesters(cwd)
 
-dados = []
-for periodo in lps:
-    for turma in periodo.turmas:
-        dados.append([periodo.descricao, turma.codigo, turma.descricao])
+    data_turmas_periodo = []
+    data_periodos = []
+    for periodo in periodos:
+        data_periodos.append([periodo.descricao, periodo.n_turmas])
+        for turma in periodo.get_turmas_periodo():
+            data_turmas_periodo.append([periodo.descricao, turma.codigo, turma.descricao])
 
-df = pd.DataFrame(data=dados, columns=['periodo', 'turma_codigo', 'turma_descricao'])
-df.name = 'Turmas por Periodo'
+    df_periodos = pd.DataFrame(data=data_periodos, columns=['periodo', 'n_turmas'])
+    df_periodos.name = 'Periodos Letivos'
 
-try:
-    if not os.path.isdir('csv'):
-        os.mkdir('csv')
+    df_turmas_periodo = pd.DataFrame(data=data_turmas_periodo, columns=['periodo', 'turma_codigo', 'turma_descricao'])
+    df_turmas_periodo.name = 'Turmas por Periodo'
 
-    df.to_csv('csv/turmas_periodo.csv')
-except OSError:
-    print("Creation of the directory 'csv' failed")
-    Util.count_error()
-    Util.wait_user_input()
-else:
-    print("Successfully created the directory 'csv' and outputfiles")
+    try:
+        if not os.path.isdir('csv'):
+            os.mkdir('csv')
+
+        df_periodos.to_csv('csv/periodos.csv')
+        df_turmas_periodo.to_csv('csv/turmas_periodo.csv')
+
+    except OSError:
+        print("Creation of the directory 'csv' failed")
+        Util.count_error()
+        Util.wait_user_input()
+    else:
+        print("Successfully created the directory 'csv' and outputfiles")
+
+    print('Erros encontrados: {}'.format(Util.get_total_errors()))
 
 
-print('Erros encontrados: {}'.format(Util.get_total_errors()))
+if __name__ == '__main__':
+    main()
