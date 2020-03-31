@@ -10,7 +10,7 @@ class Turma:
         self.codigo = codigo
         self.path = path
         self.descricao = Turma.__get_descricao(f'{path}/assessments')
-        self.atividades = Turma.__get_atividades(f'{path}/assessments')
+        self.n_atividades = len(self.get_atividades())
 
     @staticmethod
     def __get_descricao(path):
@@ -55,8 +55,7 @@ class Turma:
                 arquivo.close()
         return descricao
 
-    @staticmethod
-    def __get_atividades(path):
+    def get_atividades(self):
         """
             Recupera todas as atividades realizadas naquela turma.
             Cada turma possui informações sobre os alunos e atividades.
@@ -73,11 +72,12 @@ class Turma:
                 Em caso de erro retorna uma lista vazia.
         """
         atividades = []
+        assessments_path = f'{self.path}/assessments'
 
         try:
             files = []
             # coleta todas as 'entradas' (arquivos ou pastas) no diretório informado
-            with os.scandir(path) as entries:
+            with os.scandir(assessments_path) as entries:
                 for entry in entries:
                     # se a 'entrada' for um arquivo de extensão '.data', então corresponde a uma atividade.
                     if entry.is_file() and entry.path.endswith('.data'):
@@ -89,21 +89,21 @@ class Turma:
                 files.sort()
                 files = [str(x) for x in files]
             except Exception as e_cast:
-                print(f'Erro ao tentar ordenar lista de avalições: {path}')
+                print(f'Erro ao tentar ordenar lista de avalições: {assessments_path}')
                 print(f'Mensagem: {str(e_cast)}')
                 Util.count_error()
                 Util.wait_user_input()
 
             # percorre a lista de avaliações (arquivos) obtendo as informações de cada uma
             for file_name in files:
-                atividade = Atividade.get_atividade_from_file(f'{path}/{file_name}.data')
+                atividade = Atividade.get_atividade_from_file(f'{assessments_path}/{file_name}.data')
                 atividade.print_info()
                 atividades.append(atividade)
 
                 Util.wait_user_input()
 
         except Exception as e:
-            print(f'Erro ao acessar o caminho informado: {path}')
+            print(f'Erro ao acessar o caminho informado: {assessments_path}')
             print(f'Mensagem: {str(e)}')
             Util.count_error()
             Util.wait_user_input()
