@@ -30,48 +30,56 @@ class Atividade:
             Error:
                 Em caso de erro retorna None.
         """
-        atividade = dict()
+        data = dict()
         arquivo = None
         try:
-            print('\t\tObtendo atividade do arquivo: ', path)
+            print('\t\tObtendo dados da atividade do arquivo: ', path)
+            data['codigo'] = int(path.split('/')[-1][:-5])  # código da atividade
+
             arquivo = open(path, 'r')
-
-            arquivo.readline()                                          # primeira linha é apenas cabeçalho
-            atividade['codigo'] = int(path.split('/')[-1][:-5])         # código da atividade
-            atividade['titulo'] = arquivo.readline()[23:-1]             # título da atividade
-            arquivo.readline()                                          # descricao da turma
-            atividade['codigo_turma'] = int(arquivo.readline()[19:-1])  # data de início da atividade
-            atividade['data_inicio'] = arquivo.readline()[12:-1]        # data de início da atividade
-            atividade['data_termino'] = arquivo.readline()[10:-1]       # data de encerramento da avaliação
-            atividade['linguagem'] = arquivo.readline()[15:-1]          # linguagem de programação
-            arquivo.readline()                                          # linha do codemirror é irrelevante
-            atividade['tipo'] = arquivo.readline()[11:-1]               # tipo da atividade
-            atividade['peso'] = float(arquivo.readline()[13:-1])        # peso da atividade
-            atividade['n_questoes'] = int(arquivo.readline()[22:-1])    # número de execicios selecionados na atividade
-            arquivo.readline()                                          # cabeçalho da listagem de exercícios
-
+            lines = arquivo.readlines()
             blocos = []
-            line = arquivo.readline()
-            while line:
-                ex = line[18:-1]
-                ex = ex.strip()
-                if len(ex) > 0:  # verifica se exite alguma questão, pois no dataset alguns dados estão faltando
-                    # os blocos consistem de códigos de exercícios, separados por 'or'
-                    if ' or ' in ex:
-                        # separa os códigos dos exercícios do bloco
-                        ex = ex.split(' or ')
-                        ex = [int(x) for x in ex]  # converte os códigos dos exercícios em inteiro
-                        ex.sort()
-                    else:
-                        ex = int(ex)
 
-                    blocos.append(ex)
-                line = arquivo.readline()
+            for line in lines:
+                line = line.lower().strip()
+                if line.startswith('---- as'):
+                    data['titulo'] = line.split(':')[-1].strip()
+                elif line.startswith('---- class nu'):
+                    data['codigo_turma'] = int(line.split(':')[-1].strip())
+                elif line.startswith('---- st'):
+                    data['data_inicio'] = line.split(':')[-1].strip()
+                elif line.startswith('---- en'):
+                    data['data_termino'] = line.split(':')[-1].strip()
+                elif line.startswith('---- la'):
+                    data['linguagem'] = line.split(':')[-1].strip()
+                elif line.startswith('---- la'):
+                    data['linguagem'] = line.split(':')[-1].strip()
+                elif line.startswith('---- ty'):
+                    data['tipo'] = line.split(':')[-1].strip()
+                elif line.startswith('---- ty'):
+                    data['tipo'] = line.split(':')[-1].strip()
+                elif line.startswith('---- we'):
+                    data['peso'] = float(line.split(':')[-1].strip())
+                elif line.startswith('---- to'):
+                    data['n_questoes'] = int(line.split(':')[-1].strip())
+                elif line.startswith('---- ex'):
+                    bloco = line.split(':')[-1].strip()
+                    if len(bloco) > 0:  # verifica se exite alguma questão, pois no dataset alguns dados estão faltando
+                        # testa se realmente corresponde a um bloco de exercícios, blocos são separados por 'or'
+                        if ' or ' in bloco:
+                            # separa os códigos dos exercícios do bloco
+                            bloco = bloco.split(' or ')
+                            bloco = [int(x) for x in bloco]  # converte os códigos dos exercícios em inteiro
+                            bloco.sort()
+                        else:
+                            bloco = int(bloco)
 
-            atividade['blocos_ex'] = blocos
+                        blocos.append(bloco)
+
+            data['blocos_ex'] = blocos
 
         except Exception as e:
-            print(f'Erro ao acessar o arquivo informado: {path}')
+            print(f'Erro ao acessar o arquivo da atividade: {path}')
             print(f'Mensagem: {str(e)}')
             Util.count_error()
             Util.wait_user_input()
@@ -80,10 +88,13 @@ class Atividade:
             if arquivo is not None:
                 arquivo.close()
 
-        return atividade
+        return data
 
     def print_info(self):
-        print('\t\t- Avaliação [{}]: {}'.format(self.codigo, self.titulo))
+        """
+           Imprime as informações da ativida no console
+        """
+        print('\t\t- Atividade [{}]: {}'.format(self.codigo, self.titulo))
         print('\t\t- De {} até {}'.format(self.data_inicio, self.data_termino))
         print('\t\t- Linguagem: {}'.format(self.linguagem))
         print('\t\t- Tipo: {}'.format(self.tipo))
