@@ -1,10 +1,10 @@
 # TODO: metrias com >30 resoluções
 from util.logger import Logger
 
-from controller.controller_periodo import ControllerPeriodo
-from controller.controller_turma import ControllerTurma
-from controller.controller_atividade import ControllerAtividade
-from controller.controller_estudante import ControllerEstudante
+from controller.periodo import ControllerPeriodo
+from controller.turma import ControllerTurma
+from controller.atividade import ControllerAtividade
+from controller.estudante import ControllerEstudante
 
 from util.utilidades import Util
 
@@ -28,7 +28,6 @@ def cria_dataframe_estudante(data_estudantes):
                                                                 'ano_nascimento',
                                                                 'estado_civil',
                                                                 'tem_filhos'])
-    df_estudantes.name = 'Estudantes'
     return df_estudantes
 
 
@@ -36,7 +35,6 @@ def cria_dataframe_turmas(data_turmas):
     df_turmas = pd.DataFrame(data=data_turmas, columns=['periodo',
                                                         'turma_id',
                                                         'turma_descricao'])
-    df_turmas.name = 'Turmas'
     return df_turmas
 
 
