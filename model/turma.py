@@ -1,5 +1,6 @@
 from util.Util import Util
-from model.atividades import Atividade
+from model.atividade import Atividade
+from model.estudante import Estudante
 
 import os
 
@@ -10,7 +11,6 @@ class Turma:
         self.codigo = codigo
         self.path = path
         self.descricao = Turma.__get_descricao(f'{path}/assessments')
-        self.n_atividades = len(self.get_atividades())
 
     @staticmethod
     def __get_descricao(path):
@@ -100,7 +100,7 @@ class Turma:
                 atividade.print_info()
                 atividades.append(atividade)
 
-                Util.wait_user_input()
+                # Util.wait_user_input()
 
         except Exception as e:
             print(f'Erro ao acessar o caminho informado: {assessments_path}')
@@ -110,10 +110,50 @@ class Turma:
 
         return atividades
 
+    def get_estudantes(self):
+        # TODO: doc it
+        estudantes = []
+        students_path = f'{self.path}/users'
+
+        try:
+            folders = []
+            # coleta todas as 'entradas' (arquivos ou pastas) no diretório informado
+            with os.scandir(students_path) as entries:
+                for entry in entries:
+                    # se a 'entrada' for um diretório, então corresponde a um estudante.
+                    if entry.is_dir():
+                        # remove a extensão do nome dos arquivos para que se possa ordenar as atividades por código
+                        folders.append(entry.name)
+
+            try:
+                folders = [int(x) for x in folders]
+                folders.sort()
+                folders = [str(x) for x in folders]
+            except Exception as e_cast:
+                print(f'Erro ao tentar ordenar lista de avalições: {students_path}')
+                print(f'Mensagem: {str(e_cast)}')
+                Util.count_error()
+                Util.wait_user_input()
+
+            # percorre a lista de avaliações (arquivos) obtendo as informações de cada uma
+            for folder in folders:
+                estudante = Estudante(f'{students_path}/{folder}')
+                estudante.print_info()
+                estudantes.append(estudante)
+
+                # Util.wait_user_input()
+
+        except Exception as e:
+            print(f'Erro ao acessar o caminho informado: {students_path}')
+            print(f'Mensagem: {str(e)}')
+            Util.count_error()
+            Util.wait_user_input()
+
+        return estudantes
+
     def print_info(self):
         """
              Imprime no console as informações de uma turma.
         """
         print(f'\t> Turma [{self.codigo}]: {self.descricao}')
-        print(f'\t> Pasta: {self.path}')
-        Util.wait_user_input()
+        print(f'\t> Pasta: {self.path}\n')

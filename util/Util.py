@@ -7,8 +7,8 @@ class Util:
     # função que pausa o console aguardando o usuário teclar [ENTER]
     @staticmethod
     def wait_user_input():
-        # input('{:^15s}'.format('Tecle [ENTER]...'))
-        None
+        input('{:^15s}'.format('Tecle [ENTER]...'))
+        # None
 
     # função que limpa a tela do console
     @staticmethod

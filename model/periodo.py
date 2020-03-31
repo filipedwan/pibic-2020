@@ -8,7 +8,6 @@ class Periodo:
     def __init__(self, descricao, path):
         self.descricao = descricao
         self.path = path
-        self.n_turmas = len(self.get_turmas_periodo())
 
     def get_turmas_periodo(self):
         """
@@ -53,6 +52,4 @@ class Periodo:
             Imprime no console as informações de um período.
         """
         print('[{:-^120s}]'.format(f' Periodo: {self.descricao} '))
-        print(f'> Qtd Turmas: {self.n_turmas}\n')
         print(f'> Pasta: {self.path}\n')
-        Util.wait_user_input()

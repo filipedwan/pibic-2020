@@ -63,14 +63,16 @@ def main():
     data_turmas_periodo = []
     data_periodos = []
     for periodo in periodos:
-        data_periodos.append([periodo.descricao, periodo.n_turmas])
+        data_periodos.append([periodo.descricao])
         for turma in periodo.get_turmas_periodo():
-            data_turmas_periodo.append([periodo.descricao, turma.codigo, turma.descricao, turma.n_atividades])
+            data_turmas_periodo.append([periodo.descricao, turma.codigo, turma.descricao])
+            for estudante in turma.get_estudantes():
+                estudante.print_info()
 
-    df_periodos = pd.DataFrame(data=data_periodos, columns=['periodo', 'n_turmas'])
+    df_periodos = pd.DataFrame(data=data_periodos, columns=['periodo'])
     df_periodos.name = 'Periodos Letivos'
 
-    df_turmas_periodo = pd.DataFrame(data=data_turmas_periodo, columns=['periodo', 'turma_codigo', 'turma_descricao', 'n_atividades'])
+    df_turmas_periodo = pd.DataFrame(data=data_turmas_periodo, columns=['periodo', 'turma_codigo', 'turma_descricao'])
     df_turmas_periodo.name = 'Turmas por Periodo'
 
     try:

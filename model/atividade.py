@@ -1,5 +1,4 @@
 from util.Util import Util
-import os
 
 
 class Atividade:
@@ -38,7 +37,7 @@ class Atividade:
             arquivo = open(path, 'r')
 
             arquivo.readline()                                          # primeira linha é apenas cabeçalho
-            atividade['codigo'] = int(path.split('/')[-1][:-5])         # título da atividade
+            atividade['codigo'] = int(path.split('/')[-1][:-5])         # código da atividade
             atividade['titulo'] = arquivo.readline()[23:-1]             # título da atividade
             arquivo.readline()                                          # descricao da turma
             atividade['codigo_turma'] = int(arquivo.readline()[19:-1])  # data de início da atividade
@@ -90,4 +89,4 @@ class Atividade:
         print('\t\t- Tipo: {}'.format(self.tipo))
         print('\t\t- Peso: {:.2f}'.format(self.peso))
         print('\t\t- Nº Questões: {}'.format(self.n_questoes))
-        print('\t\t- Questões: {}'.format(self.blocos_ex))
+        print('\t\t- Questões: {}\n'.format(self.blocos_ex))
