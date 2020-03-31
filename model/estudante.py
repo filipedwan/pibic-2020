@@ -1,109 +1,34 @@
-from util.utilidades import Util
-from util.logger import Logger
-
-
 class Estudante:
 
-    def __init__(self, folder_path):
-        self.id = Estudante.get_id(folder_path)
-        self.path = folder_path
-
-        data = Estudante.get_file_data(f'{folder_path}/user.data')
-
-        self.curso_id = data.get('curso_id', 0)
-        self.curso_nome = data.get('curso_nome', '')
-        self.instituicao_id = data.get('instituicao_id', 0)
-        self.instituicao_nome = data.get('instituicao_nome', '')
-        self.escola_nome = data.get('escola_nome', '')
-        self.escola_tipo = data.get('escola_tipo', '')
-        self.escola_turno = data.get('escola_turno', '')
-        self.escola_ano_grad = data.get('escola_ano_grad', 0)
-        self.sexo = data.get('sexo', '')
-        self.ano_nascimento = data.get('ano_nascimento', 0)
-        self.estado_civil = data.get('estado_civil', '')
-        self.tem_filhos = data.get('tem_filhos', False)
-
-        data.clear()
-        del data
-
-    @staticmethod
-    def get_file_data(path):
-        # TODO: doc
-        arquivo = None
-        data = dict()
-
-        try:
-            # print('\t\tObtendo estudante do arquivo: ', path)
-            arquivo = open(path, 'r')
-            lines = arquivo.readlines()
-
-            # if len(lines) < 31:
-            #    print(f'Arquivo incompleto: {path}')
-            #    Util.wait_user_input()
-
-            for index, line in enumerate(lines, start=1):
-                line = line.lower().strip()
-                if index == 2 and line.startswith('---- course id:'):
-                    data['curso_id'] = int(Estudante.get_value(line))
-                elif index == 3 and line.startswith('---- course name:'):
-                    data['curso_nome'] = Estudante.get_value(line)
-                elif index == 4 and line.startswith('---- institution id:'):
-                    data['instituicao_id'] = int(Estudante.get_value(line))
-                elif index == 5 and line.startswith('---- institution name:'):
-                    data['instituicao_nome'] = Estudante.get_value(line)
-                elif index == 7 and line.startswith('---- high school name:'):
-                    data['escola_nome'] = Estudante.get_value(line)
-                elif index == 8 and line.startswith('---- school type:'):
-                    data['escola_tipo'] = Estudante.get_value(line)
-                elif index == 9 and line.startswith('---- shift:'):
-                    data['escola_turno'] = Estudante.get_value(line)
-                elif index == 10 and line.startswith('---- graduation year:'):
-                    data['escola_ano_grad'] = int(Estudante.get_value(line))
-                elif index == 28 and line.startswith('---- sex:'):
-                    data['sexo'] = Estudante.get_value(line)
-                elif index == 29 and line.startswith('---- year of birth:'):
-                    data['ano_nascimento'] = int(Estudante.get_value(line))
-                elif index == 30 and line.startswith('---- civil status:'):
-                    data['estado_civil'] = Estudante.get_value(line)
-                elif index == 31 and line.startswith('---- have kids:'):
-                    data['tem_filhos'] = True if Estudante.get_value(line) == 'yes' else False
-
-        except Exception as e:
-            Logger.error(f'Erro ao acessar o arquivo de estudante: {path}')
-            Util.count_error()
-            Util.wait_user_input()
-        finally:
-            # finally é sempre executado, então fechamos o arquivo se ele existir
-            if arquivo is not None:
-                arquivo.close()
-
-        return data
-
-    @staticmethod
-    def get_id(text):
-        # TODO: doc
-        value = 0
-        try:
-            value = int(text.split('/')[-1])
-        except Exception as e:
-            Logger.error(f'Erro ao tentar obter id do estudante: {text}')
-            Util.count_error()
-            Util.wait_user_input()
-
-        return value
-
-    @staticmethod
-    def get_value(text):
-        # TODO: doc
-        value = ''
-        try:
-            value = str(text).split(':')[-1].strip()
-        except Exception as e:
-            Logger.error(f'Erro ao tentar obter valor da linha: {text}')
-            Util.count_error()
-            Util.wait_user_input()
-
-        return value
+    def __init__(self,
+                 codigo,
+                 path,
+                 curso_id,
+                 curso_nome,
+                 instituicao_id,
+                 instituicao_nome,
+                 escola_nome,
+                 escola_tipo,
+                 escola_turno,
+                 escola_ano_grad,
+                 sexo,
+                 ano_nascimento,
+                 estado_civil,
+                 tem_filhos):
+        self.id = codigo
+        self.path = path
+        self.curso_id = curso_id
+        self.curso_nome = curso_nome
+        self.instituicao_id = instituicao_id
+        self.instituicao_nome = instituicao_nome
+        self.escola_nome = escola_nome
+        self.escola_tipo = escola_tipo
+        self.escola_turno = escola_turno
+        self.escola_ano_grad = escola_ano_grad
+        self.sexo = sexo
+        self.ano_nascimento = ano_nascimento
+        self.estado_civil = estado_civil
+        self.tem_filhos = tem_filhos
 
     def print_info(self):
         # TODO: doc

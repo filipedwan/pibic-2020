@@ -2,6 +2,10 @@
 from util.logger import Logger
 
 from controller.controller_periodo import ControllerPeriodo
+from controller.controller_turma import ControllerTurma
+from controller.controller_atividade import ControllerAtividade
+from controller.controller_estudante import ControllerEstudante
+
 from util.utilidades import Util
 
 import os
@@ -61,22 +65,20 @@ def main():
     # cwd (current working dir): caminho onde está o Dataset do Codebench
     cwd = os.getcwd() + '/dataset/'
 
-    periodos = ControllerPeriodo.carrega_periodos(cwd)
-
     lista_turmas = []
     lista_estudantes = []
     lista_periodos = []
     lista_atividades = []
 
-    for periodo in periodos:
+    for periodo in ControllerPeriodo.carrega_periodos(cwd):
         lista_periodos.append([periodo.descricao])
 
-        for turma in periodo.get_turmas_periodo():
+        for turma in ControllerTurma.get_turmas_periodo(periodo):
             lista_turmas.append([periodo.descricao,
                                  turma.id,
                                  turma.descricao])
 
-            for atividade in turma.get_atividades():
+            for atividade in ControllerAtividade.get_atividades(turma):
                 lista_atividades.append([atividade.id,
                                          atividade.titulo,
                                          atividade.turma_id,
@@ -88,7 +90,7 @@ def main():
                                          atividade.n_questoes,
                                          atividade.blocos_ex])
 
-            for estudante in turma.get_estudantes():
+            for estudante in ControllerEstudante.get_estudantes(turma):
                 lista_estudantes.append([periodo.descricao,
                                          turma.id,
                                          estudante.id,
@@ -140,11 +142,4 @@ def main():
 
 
 if __name__ == '__main__':
-    # main()
-    Logger.debug('debug')
-    Logger.info('info')
-    Logger.warn('wanning')
-    try:
-        x = 0/0
-    except ZeroDivisionError as e:
-        Logger.error('erro')
+    main()
