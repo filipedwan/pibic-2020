@@ -24,7 +24,7 @@ class Logger:
         Logger.configure_warn()
         Logger.configure_error()
 
-        print('Logging configurado')
+        Logger.info('Logging configurado')
 
     @staticmethod
     def debug(msg):
