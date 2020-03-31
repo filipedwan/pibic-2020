@@ -96,7 +96,7 @@ class Turma:
 
             # percorre a lista de avaliações (arquivos) obtendo as informações de cada uma
             for file_name in files:
-                atividade = Atividade.get_atividade_from_file(f'{assessments_path}/{file_name}.data')
+                atividade = Atividade(f'{assessments_path}/{file_name}.data')
                 atividade.print_info()
                 atividades.append(atividade)
 
