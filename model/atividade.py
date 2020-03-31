@@ -1,13 +1,14 @@
-from util.Util import Util
+from util.utilidades import Util
+from util.logger import Logger
 
 
 class Atividade:
 
     def __init__(self, file_path):
-        data = Atividade.get_atividade_from_file(file_path)
-        self.codigo = data.get('codigo', 0)
+        data = Atividade.get_file_data(file_path)
+        self.id = data.get('codigo', 0)
         self.titulo = data.get('titulo', '')
-        self.codigo_turma = data.get('codigo_turma', 0)
+        self.turma_id = data.get('codigo_turma', 0)
         self.data_inicio = data.get('data_inicio', '')
         self.data_termino = data.get('data_termino', '')
         self.linguagem = data.get('linguagem', '')
@@ -17,7 +18,7 @@ class Atividade:
         self.blocos_ex = data.get('blocos_ex', [])
 
     @staticmethod
-    def get_atividade_from_file(path):
+    def get_file_data(path):
         """
             Retorna uma Atividade com as propriedades obtidas de um arquivo de atividade (extensão '.data')
 
@@ -33,7 +34,7 @@ class Atividade:
         data = dict()
         arquivo = None
         try:
-            print('\t\tObtendo dados da atividade do arquivo: ', path)
+            # print('\t\tObtendo dados da atividade do arquivo: ', path)
             data['codigo'] = int(path.split('/')[-1][:-5])  # código da atividade
 
             arquivo = open(path, 'r')
@@ -79,8 +80,7 @@ class Atividade:
             data['blocos_ex'] = blocos
 
         except Exception as e:
-            print(f'Erro ao acessar o arquivo da atividade: {path}')
-            print(f'Mensagem: {str(e)}')
+            Logger.error(f'Erro ao acessar o arquivo da atividade: {path}')
             Util.count_error()
             Util.wait_user_input()
         finally:
@@ -94,7 +94,7 @@ class Atividade:
         """
            Imprime as informações da ativida no console
         """
-        print('\t\t- Atividade [{}]: {}'.format(self.codigo, self.titulo))
+        print('\t\t- Atividade [{}]: {}'.format(self.id, self.titulo))
         print('\t\t- De {} até {}'.format(self.data_inicio, self.data_termino))
         print('\t\t- Linguagem: {}'.format(self.linguagem))
         print('\t\t- Tipo: {}'.format(self.tipo))

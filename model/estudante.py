@@ -1,4 +1,5 @@
-from util.Util import Util
+from util.utilidades import Util
+from util.logger import Logger
 
 
 class Estudante:
@@ -32,7 +33,7 @@ class Estudante:
         data = dict()
 
         try:
-            print('\t\tObtendo estudante do arquivo: ', path)
+            # print('\t\tObtendo estudante do arquivo: ', path)
             arquivo = open(path, 'r')
             lines = arquivo.readlines()
 
@@ -68,8 +69,7 @@ class Estudante:
                     data['tem_filhos'] = True if Estudante.get_value(line) == 'yes' else False
 
         except Exception as e:
-            print(f'Erro ao acessar o arquivo de estudante: {path}')
-            print(f'Mensagem: {str(e)}')
+            Logger.error(f'Erro ao acessar o arquivo de estudante: {path}')
             Util.count_error()
             Util.wait_user_input()
         finally:
@@ -86,8 +86,7 @@ class Estudante:
         try:
             value = int(text.split('/')[-1])
         except Exception as e:
-            print(f'Erro ao tentar obter id do estudante: {text}')
-            print(f'Mensagem: {str(e)}')
+            Logger.error(f'Erro ao tentar obter id do estudante: {text}')
             Util.count_error()
             Util.wait_user_input()
 
@@ -100,8 +99,7 @@ class Estudante:
         try:
             value = str(text).split(':')[-1].strip()
         except Exception as e:
-            print(f'Erro ao tentar obter valor da linha: {text}')
-            print(f'Mensagem: {str(e)}')
+            Logger.error(f'Erro ao tentar obter valor da linha: {text}')
             Util.count_error()
             Util.wait_user_input()
 

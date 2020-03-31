@@ -1,7 +1,10 @@
 # TODO: metrias com >30 resoluções
 import os
+from util.logger import Logger
+
 from model.periodo import Periodo
-from util.Util import Util
+from util.utilidades import Util
+
 import pandas as pd
 
 
@@ -21,9 +24,10 @@ def carrega_periodos(path):
     """
     periodos = []
 
+    # noinspection PyBroadException
     try:
-        with os.scandir(
-                path) as entries:  # coleta todas as 'entradas' (arquivos ou pastas) no caminho informado (path).
+        # coleta todas as 'entradas' (arquivos ou pastas) no caminho informado (path).
+        with os.scandir(path) as entries:
             folders = []  # lista que irá guardar todas as pastas encontradas no caminho informado (path).
             for entry in entries:
                 # entry: name, path, is_dir(), is_file(), stat
@@ -44,8 +48,7 @@ def carrega_periodos(path):
                 # utilidades.clear_console()
 
     except Exception as e:
-        print(f'Erro ao acessar o caminho informado: {path}')
-        print(f'Mensagem: {str(e)}')
+        Logger.error(f'Erro ao acessar o caminho informado: {path}')
         Util.count_error()
         Util.wait_user_input()
 
@@ -74,7 +77,7 @@ def cria_dataframe_estudante(data_estudantes):
 
 def cria_dataframe_turmas(data_turmas):
     df_turmas = pd.DataFrame(data=data_turmas, columns=['periodo',
-                                                        'turma_codigo',
+                                                        'turma_id',
                                                         'turma_descricao'])
     df_turmas.name = 'Turmas'
     return df_turmas
@@ -82,8 +85,22 @@ def cria_dataframe_turmas(data_turmas):
 
 def cria_dataframe_periodos(data_periodos):
     df_periodos = pd.DataFrame(data=data_periodos, columns=['periodo'])
-    df_periodos.name = 'Periodos Letivos'
     return df_periodos
+
+
+def cria_dataframe_atividades(lista_atividades):
+    df_atividades = pd.DataFrame(data=lista_atividades, columns=['atividde_id',
+                                                                 'titulo',
+                                                                 'turma_id',
+                                                                 'tipo',
+                                                                 'linguagem',
+                                                                 'peso',
+                                                                 'data_inicio',
+                                                                 'data_termino',
+                                                                 'n_questoes',
+                                                                 'blocos_ex'])
+    return df_atividades
+
 
 def main():
     Util.clear_console()
@@ -93,51 +110,74 @@ def main():
 
     periodos = carrega_periodos(cwd)
 
-    data_turmas = []
-    data_estudantes = []
-    data_periodos = []
+    lista_turmas = []
+    lista_estudantes = []
+    lista_periodos = []
+    lista_atividades = []
 
     for periodo in periodos:
-        data_periodos.append([periodo.descricao])
+        lista_periodos.append([periodo.descricao])
 
         for turma in periodo.get_turmas_periodo():
-            data_turmas.append([periodo.descricao,
-                                turma.id,
-                                turma.descricao])
+            lista_turmas.append([periodo.descricao,
+                                 turma.id,
+                                 turma.descricao])
+
+            for atividade in turma.get_atividades():
+                lista_atividades.append([atividade.id,
+                                         atividade.titulo,
+                                         atividade.turma_id,
+                                         atividade.tipo,
+                                         atividade.linguagem,
+                                         atividade.peso,
+                                         atividade.data_inicio,
+                                         atividade.data_termino,
+                                         atividade.n_questoes,
+                                         atividade.blocos_ex])
 
             for estudante in turma.get_estudantes():
-                data_estudantes.append([periodo.descricao,
-                                        turma.id,
-                                        estudante.id,
-                                        estudante.curso_id,
-                                        estudante.curso_nome,
-                                        estudante.instituicao_id,
-                                        estudante.instituicao_nome,
-                                        estudante.escola_nome,
-                                        estudante.escola_tipo,
-                                        estudante.escola_turno,
-                                        estudante.escola_ano_grad,
-                                        estudante.sexo,
-                                        estudante.ano_nascimento,
-                                        estudante.estado_civil,
-                                        estudante.tem_filhos])
-
-    df_periodos = cria_dataframe_periodos(data_periodos)
-
-    df_turmas = cria_dataframe_turmas(data_turmas)
-
-    df_estudantes = cria_dataframe_estudante(data_estudantes)
+                lista_estudantes.append([periodo.descricao,
+                                         turma.id,
+                                         estudante.id,
+                                         estudante.curso_id,
+                                         estudante.curso_nome,
+                                         estudante.instituicao_id,
+                                         estudante.instituicao_nome,
+                                         estudante.escola_nome,
+                                         estudante.escola_tipo,
+                                         estudante.escola_turno,
+                                         estudante.escola_ano_grad,
+                                         estudante.sexo,
+                                         estudante.ano_nascimento,
+                                         estudante.estado_civil,
+                                         estudante.tem_filhos])
 
     try:
         if not os.path.isdir('csv'):
             os.mkdir('csv')
 
+        df_periodos = cria_dataframe_periodos(lista_periodos)
         df_periodos.to_csv('csv/periodos.csv')
+        lista_periodos.clear()
+        del lista_periodos
+
+        df_turmas = cria_dataframe_turmas(lista_turmas)
         df_turmas.to_csv('csv/turmas.csv')
+        lista_turmas.clear()
+        del lista_turmas
+
+        df_atividades = cria_dataframe_atividades(lista_atividades)
+        df_atividades.to_csv('csv/atividades.csv')
+        lista_atividades.clear()
+        del lista_atividades
+
+        df_estudantes = cria_dataframe_estudante(lista_estudantes)
         df_estudantes.to_csv('csv/estudantes.csv')
+        lista_estudantes.clear()
+        del lista_estudantes
 
     except OSError:
-        print("Não foi possível criar a pasta 'csv'!")
+        Logger.error("Não foi possível criar a pasta 'csv'!")
         Util.count_error()
         Util.wait_user_input()
     else:
@@ -147,4 +187,11 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    # main()
+    Logger.debug('debug')
+    Logger.info('info')
+    Logger.warn('wanning')
+    try:
+        x = 0/0
+    except ZeroDivisionError as e:
+        Logger.error('erro')

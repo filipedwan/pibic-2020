@@ -1,4 +1,4 @@
-from util.Util import Util
+from util.utilidades import Util
 from model.turma import Turma
 import os
 
@@ -24,16 +24,20 @@ class Periodo:
         try:
             folders = []
 
-            with os.scandir(self.path) as entries:  # coleta todas os arquivos ou pastas dentro do diretório do período.
+            # coleta todas os arquivos/pastas dentro do diretório do período.
+            with os.scandir(self.path) as entries:
                 for entry in entries:
-                    if entry.is_dir():  # se a 'entrada' for um diretório (pasta) então corresponde a uma turma válida
+                    # se a 'entrada' for uma diretório (pasta) então corresponde a uma 'turma'
+                    if entry.is_dir():
                         folders.append(entry.path)
 
             folders.sort()
+
+            # cria uma 'turma' para cada diretório encontrado
             for folder in folders:
                 code = int(folder.split('/')[-1])
                 turma = Turma(code, folder)
-                turma.print_info()
+                # turma.print_info()
 
                 turmas.append(turma)
 
