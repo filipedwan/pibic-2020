@@ -8,7 +8,7 @@ import os
 class Turma:
 
     def __init__(self, codigo, path):
-        self.codigo = codigo
+        self.id = codigo
         self.path = path
         self.descricao = Turma.__get_descricao(f'{path}/assessments')
 
@@ -161,5 +161,5 @@ class Turma:
         """
              Imprime no console as informações de uma turma.
         """
-        print(f'\t> Turma [{self.codigo}]: {self.descricao}')
+        print(f'\t> Turma [{self.id}]: {self.descricao}')
         print(f'\t> Pasta: {self.path}\n')

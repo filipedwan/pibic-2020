@@ -3,10 +3,11 @@ from util.Util import Util
 
 class Estudante:
 
-    def __init__(self, file_path):
-        self.id = Estudante.get_id(file_path)
+    def __init__(self, folder_path):
+        self.id = Estudante.get_id(folder_path)
+        self.path = folder_path
 
-        data = Estudante.get_file_data(f'{file_path}/user.data')
+        data = Estudante.get_file_data(f'{folder_path}/user.data')
 
         self.curso_id = data.get('curso_id', 0)
         self.curso_nome = data.get('curso_nome', '')
