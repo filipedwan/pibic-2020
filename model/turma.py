@@ -62,9 +62,6 @@ class Turma:
             As atividades estão localizadas dentro da pasta 'assessments', no diretório da turma.
             Cada atividade corresponde a um arquivo de extensão '.data'.
 
-            Args:
-                path (string): caminho absoluto do diretório onde se encontra as atividades da turma.
-
             Returns:
                 atividades (lista): Todas as atividades realizadas na turma.
 
@@ -111,7 +108,18 @@ class Turma:
         return atividades
 
     def get_estudantes(self):
-        # TODO: doc it
+        """
+            Recupera todas os estudantes (usuários) matriculados naquela turma.
+            Cada turma possui informações sobre os alunos e atividades.
+            Os alunos estão localizadas dentro da pasta 'users', no diretório da turma.
+            Cada aluno possui suas informações dentre de uma pasta nomeada com seu 'id'.
+
+            Returns:
+                estudantes (lista): Todos os estudantes matriculados na turma.
+
+            Error:
+                Em caso de erro retorna uma lista vazia.
+        """
         estudantes = []
         students_path = f'{self.path}/users'
 
@@ -122,7 +130,6 @@ class Turma:
                 for entry in entries:
                     # se a 'entrada' for um diretório, então corresponde a um estudante.
                     if entry.is_dir():
-                        # remove a extensão do nome dos arquivos para que se possa ordenar as atividades por código
                         folders.append(entry.name)
 
             try:
@@ -130,17 +137,16 @@ class Turma:
                 folders.sort()
                 folders = [str(x) for x in folders]
             except Exception as e_cast:
-                print(f'Erro ao tentar ordenar lista de avalições: {students_path}')
+                print(f'Erro ao tentar ordenar lista de estudantes: {students_path}')
                 print(f'Mensagem: {str(e_cast)}')
                 Util.count_error()
                 Util.wait_user_input()
 
-            # percorre a lista de avaliações (arquivos) obtendo as informações de cada uma
+            # percorre a lista de usuários (diretórios) obtendo as informações de cada um
             for folder in folders:
                 estudante = Estudante(f'{students_path}/{folder}')
                 estudante.print_info()
                 estudantes.append(estudante)
-
                 # Util.wait_user_input()
 
         except Exception as e:
