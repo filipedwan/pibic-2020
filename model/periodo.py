@@ -14,9 +14,6 @@ class Periodo:
             Retorna uma lista contendo todas as turmas de um período letivo, dado o caminho (diretório) do período.
             Cada turma corresponde a uma pasta dentro do diretório, '220' por exemplo são os dados da turma de número 220.
 
-            Args:
-                path (string): caminho absoluto do diretório onde se encontra as turmas do período.
-
             Returns:
                 turmas (list): Todas as turmas do período.
 
