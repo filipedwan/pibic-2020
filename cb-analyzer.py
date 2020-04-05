@@ -1,55 +1,59 @@
 # TODO: metrias com >30 resoluções
-from util.logger import Logger
+import os
+import csv
 
-from controller.periodo import ControllerPeriodo
-from controller.turma import ControllerTurma
 from controller.atividade import ControllerAtividade
 from controller.estudante import ControllerEstudante
 from controller.execucao import ControllerExecucao
-
+from controller.periodo import ControllerPeriodo
+from controller.turma import ControllerTurma
+from util.logger import Logger
 from util.utilidades import Util
-
-import os
 
 
 def save_execucoes(lista_execucoes, file_name):
     Logger.info(f'Salvando execuções no arquivo: {file_name}')
     with open(file_name, 'w') as file:
         file.write('periodo,turma_id,estudante_id,atividade_id,exercicio_id,n_submissoes,n_testes,n_erros,nota_final,acertou\n')
+        writter = csv.writer(file)
         for e in lista_execucoes:
-            file.write(f'{e[0]},{e[1]},{e[2]},{e[3]},{e[4]},{e[5]},{e[6]},{e[7]},{e[8]},{e[9]}\n')
+            writter.writerow(e)
 
 
 def save_estudantes(lista_estudantes, file_name):
     Logger.info(f'Salvando estudantes no arquivo: {file_name}')
     with open(file_name, 'w') as file:
         file.write('periodo,turma_id,estudante_id,curso_id,curso_nome,instituicao_id,instituicao_nome,escola_nome,escola_tipo,escola_turno,escola_ano_grad,sexo,ano_nascimento,estado_civil,tem_filhos\n')
+        writter = csv.writer(file)
         for e in lista_estudantes:
-            file.write(f'{e[0]},{e[1]},{e[2]},{e[3]},{e[4]},{e[5]},{e[6]},{e[7]},{e[8]},{e[9]},{e[10]},{e[11]},{e[12]},{e[13]},{e[14]}\n')
+            writter.writerow(e)
 
 
 def save_atividades(lista_atividades, file_name):
     Logger.info(f'Salvando atividades no arquivo: {file_name}')
     with open(file_name, 'w') as file:
         file.write('turma_id,atividade_id,titulo,tipo,linguagem,peso,data_inicio,data_termino,n_exercicios,blocos_exercicios\n')
+        writter = csv.writer(file)
         for a in lista_atividades:
-            file.write(f'{a[0]},{a[1]},{a[2]},{a[3]},{a[4]},{a[5]},{a[6]},{a[7]},{a[8]},{a[9]}\n')
+            writter.writerow(a)
 
 
 def save_turmas(lista_turmas, file_name):
     Logger.info(f'Salvando turmas no arquivo: {file_name}')
     with open(file_name, 'w') as file:
         file.write('periodo,turma_id,turma_descricao\n')
+        writter = csv.writer(file)
         for t in lista_turmas:
-            file.write(f'{t[0]},{t[1]},{t[2]}\n')
+            writter.writerow(t)
 
 
 def save_periodos(lista_periodos, file_name):
     Logger.info(f'Salvando períodos no arquivo: {file_name}')
     with open(file_name, 'w') as file:
         file.write('periodo\n')
+        writter = csv.writer(file)
         for p in lista_periodos:
-            file.write(f'{p[0]}\n')
+            writter.writerow(p)
 
 
 def main():
@@ -148,10 +152,11 @@ def main():
     lista_execucoes.clear()
     del lista_execucoes
 
-    with open('error_report.csv', 'w') as f:
+    with open(f'{csv_path}/error_report.csv', 'w') as f:
         f.write('erro_name,error_count\n')
+        writter = csv.writer(f)
         for name, count in Util.get_unique_errors():
-            f.write(f'{name}({count})\n')
+            writter.writerow([name, count])
 
 
 if __name__ == '__main__':

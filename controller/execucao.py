@@ -1,4 +1,5 @@
 import os
+import re
 
 from model.execucao import Execucao
 
@@ -27,25 +28,24 @@ class ControllerExecucao:
         try:
             arquivo = open(path, 'r')
             lines = arquivo.readlines()
-            lines = [x.strip() for x in lines]
             find_grade = False
 
-            sub = len([x for x in lines if x.startswith('== SU')])
+            sub = len([x.strip() for x in lines if x.startswith('== SU')])
             data['n_submissoes'] = sub
 
-            test = len([x for x in lines if x.startswith('== TE')])
+            test = len([x.strip() for x in lines if x.startswith('== TE')])
             data['n_testes'] = test
 
-            err = len([x for x in lines if x.startswith('== ER')])
+            err = len([x.strip() for x in lines if x.startswith('== ER')])
             data['n_erros'] = err
 
-            found_erros = [x.split(':')[0] for x in lines if 'Error' in x]
+            found_erros = [x.strip().split(':')[0] for x in lines if re.search(r"^[a-zA-Z0-9_\.]+Error", x)]
             Util.register_errors(found_erros)
 
             for line in lines:
                 if find_grade:
                     find_grade = False
-                    data['nota_final'] = float(line[:-1])
+                    data['nota_final'] = float(line.strip()[:-1])
                 elif line.startswith('-- GR'):
                     find_grade = True
                     continue
