@@ -25,7 +25,6 @@ class ControllerAtividade:
         data = dict()
         arquivo = None
         try:
-            # print('\t\tObtendo dados da atividade do arquivo: ', path)
             data['codigo'] = int(path.split('/')[-1][:-5])  # código da atividade
 
             arquivo = open(path, 'r')
@@ -70,18 +69,15 @@ class ControllerAtividade:
 
             data['blocos_ex'] = blocos
 
-        except Exception as e:
+        except OSError:
             Logger.error(f'Erro ao acessar o arquivo da atividade: {path}')
-            Util.count_error()
             Util.wait_user_input()
         finally:
-            # finally é sempre executado, então fechamos o arquivo se ele existir
             if arquivo is not None:
                 arquivo.close()
 
         return data
 
-    # noinspection PyBroadException
     @staticmethod
     def get_atividades(turma):
         """
@@ -103,50 +99,36 @@ class ControllerAtividade:
                 Em caso de erro retorna uma lista vazia.
         """
         atividades = []
-        assessments_path = f'{turma.path}/assessments'
 
         try:
-            files = []
             # coleta todas os arquivos/pastas dentro do diretório de atividades da turma
-            with os.scandir(assessments_path) as entries:
+            with os.scandir(f'{turma.path}/assessments') as entries:
                 for entry in entries:
                     # se a 'entrada' for um arquivo de extensão '.data', então corresponde a uma atividade.
                     if entry.is_file() and entry.path.endswith('.data'):
-                        # remove a extensão do nome dos arquivos para que se possa ordenar as atividades por código
-                        files.append(entry.name[:-5])
+                        Logger.debug(f'Arquivo: {entry.path}')
+                        data = ControllerAtividade.__get_file_data(entry.path)
 
-            # ordena as atividades por código
-            try:
-                files = [int(x) for x in files]
-                files.sort()
-                files = [str(x) for x in files]
-            except Exception as e:
-                Logger.error(f'Erro ao tentar ordenar lista de avalições: {assessments_path}')
-                Util.count_error()
-                Util.wait_user_input()
+                        atividade = Atividade(data.get('codigo', 0),
+                                              data.get('titulo', ''),
+                                              entry.path,
+                                              data.get('codigo_turma', 0),
+                                              data.get('data_inicio', ''),
+                                              data.get('data_termino', ''),
+                                              data.get('linguagem', ''),
+                                              data.get('tipo', ''),
+                                              data.get('peso', 0.0),
+                                              data.get('n_questoes', 0),
+                                              data.get('blocos_ex', []))
+                        data.clear()
+                        del data
 
-            # cria as 'atividades' com base nas informações de cada arquivo
-            for file_name in files:
-                data = ControllerAtividade.__get_file_data(f'{assessments_path}/{file_name}.data')
+                        # atividade.print_info()
+                        Logger.info(f'Atividade encontrada!')
+                        atividades.append(atividade)
 
-                atividade = Atividade(data.get('codigo', 0),
-                                      data.get('titulo', ''),
-                                      data.get('codigo_turma', 0),
-                                      data.get('data_inicio', ''),
-                                      data.get('data_termino', ''),
-                                      data.get('linguagem', ''),
-                                      data.get('tipo', ''),
-                                      data.get('peso', 0.0),
-                                      data.get('n_questoes', 0),
-                                      data.get('blocos_ex', []))
-                # atividade.print_info()
-                atividades.append(atividade)
-
-                # Util.wait_user_input()
-
-        except Exception as e:
-            Logger.error(f'Erro ao acessar o caminho informado: {assessments_path}')
-            Util.count_error()
+        except OSError:
+            Logger.error(f'Erro ao acessar o caminho informado: {turma.path}/assessements')
             Util.wait_user_input()
 
         return atividades

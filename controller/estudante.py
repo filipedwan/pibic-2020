@@ -25,64 +25,48 @@ class ControllerEstudante:
         estudantes = []
 
         try:
-            folders = []
+
             # coleta todas os arquivos/pastas no diretório de 'estudantes' informado
             with os.scandir(f'{turma.path}/users') as entries:
                 for entry in entries:
                     # se a 'entrada' for um diretório, então corresponde as informações de um 'estudante'.
                     if entry.is_dir():
-                        folders.append(entry.name)
+                        Logger.debug(f'Arquivo: {entry.path}')
+                        data = ControllerEstudante.__get_file_data(f'{entry.path}/user.data')
+                        estudante = Estudante(int(entry.name),
+                                              entry.path,
+                                              data.get('curso_id', 0),
+                                              data.get('curso_nome', ''),
+                                              data.get('instituicao_id', 0),
+                                              data.get('instituicao_nome', ''),
+                                              data.get('escola_nome', ''),
+                                              data.get('escola_tipo', ''),
+                                              data.get('escola_turno', ''),
+                                              data.get('escola_ano_grad', 0),
+                                              data.get('sexo', ''),
+                                              data.get('ano_nascimento', 0),
+                                              data.get('estado_civil', ''),
+                                              data.get('tem_filhos', False))
+                        data.clear()
+                        del data
 
-            # ordena os 'estudantes' por código
-            try:
-                folders = [int(x) for x in folders]
-                folders.sort()
-                folders = [str(x) for x in folders]
-            except Exception as e_cast:
-                Logger.error(f'Erro ao tentar ordenar lista de estudantes: {turma.path}/users')
-                Util.count_error()
-                Util.wait_user_input()
+                        # estudante.print_info()
+                        Logger.info(f'Estudante encontrado!')
+                        estudantes.append(estudante)
 
-            # percorre a lista de 'estudantes' (diretórios) obtendo as informações de cada um
-            for folder in folders:
-                data = ControllerEstudante.get_file_data(f'{turma.path}/users/{folder}/user.data')
-                estudante = Estudante(int(folder),
-                                      f'{turma.path}/users/{folder}',
-                                      data.get('curso_id', 0),
-                                      data.get('curso_nome', ''),
-                                      data.get('instituicao_id', 0),
-                                      data.get('instituicao_nome', ''),
-                                      data.get('escola_nome', ''),
-                                      data.get('escola_tipo', ''),
-                                      data.get('escola_turno', ''),
-                                      data.get('escola_ano_grad', 0),
-                                      data.get('sexo', ''),
-                                      data.get('ano_nascimento', 0),
-                                      data.get('estado_civil', ''),
-                                      data.get('tem_filhos', False))
-
-                data.clear()
-                del data
-
-                # estudante.print_info()
-                estudantes.append(estudante)
-                # Util.wait_user_input()
-
-        except Exception as e:
+        except OSError:
             Logger.error(f'Erro ao acessar o diretório de estudantes: {turma.path}/users')
-            Util.count_error()
             Util.wait_user_input()
 
         return estudantes
 
     @staticmethod
-    def get_file_data(path):
+    def __get_file_data(path):
         # TODO: doc
         arquivo = None
         data = dict()
 
         try:
-            # print('\t\tObtendo estudante do arquivo: ', path)
             arquivo = open(path, 'r')
             lines = arquivo.readlines()
 
@@ -113,12 +97,10 @@ class ControllerEstudante:
                 elif index == 31 and line.startswith('---- have kids:'):
                     data['tem_filhos'] = True if ControllerEstudante.__get_property_value(line) == 'yes' else False
 
-        except Exception as e:
+        except OSError:
             Logger.error(f'Erro ao acessar o arquivo de estudante: {path}')
-            Util.count_error()
             Util.wait_user_input()
         finally:
-            # finally é sempre executado, então fechamos o arquivo se ele existir
             if arquivo is not None:
                 arquivo.close()
 
@@ -127,13 +109,6 @@ class ControllerEstudante:
     @staticmethod
     def __get_property_value(text):
         # TODO: doc
-        value = ''
-        try:
-            value = str(text).split(':')[-1].strip()
-        except Exception as e:
-            Logger.error(f'Erro ao tentar obter valor da linha: {text}')
-            Util.count_error()
-            Util.wait_user_input()
-
+        value = str(text).split(':')[-1].strip()
         return value
 

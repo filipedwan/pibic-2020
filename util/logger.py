@@ -3,7 +3,7 @@ import os
 
 
 class Logger:
-    __path = os.getcwd() + '/logs/'
+    __path = os.getcwd() + '/logs'
     __debug = None
     __info = None
     __warn = None
@@ -11,11 +11,10 @@ class Logger:
 
     @staticmethod
     def configure():
-        logging.basicConfig(level=logging.ERROR)
+        logging.basicConfig(level=logging.DEBUG)
 
         try:
-            if not os.path.isdir('logs'):
-                os.mkdir('logs')
+            os.mkdir(Logger.__path)
         except Exception as e:
             print(str(e))
 

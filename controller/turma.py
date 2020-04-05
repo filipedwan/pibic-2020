@@ -22,34 +22,25 @@ class ControllerTurma:
         """
         turmas = []
         try:
-            folders = []
-
             # coleta todas os arquivos/pastas dentro do diretório do período.
             with os.scandir(periodo.path) as entries:
                 for entry in entries:
                     # se a 'entrada' for uma diretório (pasta) então corresponde a uma 'turma'
                     if entry.is_dir():
-                        folders.append(entry.path)
+                        Logger.debug(f'Diretório: {entry.path}')
+                        code = int(entry.name)
+                        descricao = ControllerTurma.__get_turma_descricao(f'{entry.path}/assessments')
+                        turma = Turma(code, descricao, entry.path)
+                        # turma.print_info()
+                        Logger.info(f'Turma encontrada!')
+                        turmas.append(turma)
 
-            folders.sort()
-
-            # cria uma 'turma' para cada diretório encontrado
-            for folder in folders:
-                code = int(folder.split('/')[-1])
-                descricao = ControllerTurma.__get_turma_descricao(f'{folder}/assessments')
-                turma = Turma(code, descricao, folder)
-                # turma.print_info()
-
-                turmas.append(turma)
-
-        except Exception as e:
+        except OSError:
             print(f'Erro ao acessar o caminho informado: {periodo.path}')
-            print(f'Mensagem: {str(e)}')
-            Util.count_error()
+            Util.wait_user_input()
 
         return turmas
 
-    # noinspection PyBroadException
     @staticmethod
     def __get_turma_descricao(path):
         """
@@ -87,9 +78,9 @@ class ControllerTurma:
             # ---- class name: Introdução à Programação de Computadores
             descricao = arquivo.readlines()[2][17:-1]
 
-        except Exception as e:
+        except OSError:
             Logger.error(f'Erro ao acessar o caminho informado: {path}')
-            Util.count_error()
+            Util.wait_user_input()
         finally:
             if arquivo is not None:
                 arquivo.close()
