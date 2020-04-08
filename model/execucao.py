@@ -1,8 +1,22 @@
 class Execucao:
 
-    def __init__(self, atividade_id, exercicio_id, n_submissoes, n_testes, n_erros, nota, acertou):
+    def __init__(
+            self,
+            atividade_id,
+            exercicio_id,
+            data_inicio,
+            data_termino,
+            n_submissoes,
+            n_testes,
+            n_erros,
+            nota,
+            acertou,
+
+    ):
         self.atividade_id = atividade_id
         self.exercicio_id = exercicio_id
+        self.data_inicio = data_inicio
+        self.data_termino = data_termino
         self.n_submissoes = n_submissoes
         self.n_testes = n_testes
         self.n_erros = n_erros
@@ -14,6 +28,8 @@ class Execucao:
            Imprime as informações da execução da questão no console
         """
         print(f'\t\t- Atividade [{self.atividade_id}]: Q{self.exercicio_id}')
+        print('\t\t- Iniciou em: {}\n'.format(self.data_inicio))
+        print('\t\t- Terminou em: {}\n'.format(self.data_termino))
         print('\t\t- Nº Submissões: {:03d}\n'.format(self.n_submissoes))
         print('\t\t- Nº Testes: {:03d}\n'.format(self.n_testes))
         print('\t\t- Nº Erros: {:03d}\n'.format(self.n_erros))

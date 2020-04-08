@@ -1,6 +1,7 @@
 import os
 import re
 
+from numpy import NaN
 from model.execucao import Execucao
 
 from util.utilidades import Util
@@ -10,57 +11,99 @@ from util.logger import Logger
 class ControllerExecucao:
 
     @staticmethod
-    def __get_file_data(path):
+    def __get_codemirror_dates(path):
         """
-            Retorna uma Atividade com as propriedades obtidas de um arquivo de atividade (extensão '.data')
+            Retorna as datas de início e término da tentativa de solucionar um exercício, obtidas a partir do arquivo de 'log' do CodeMirror.
 
             Args:
-                path (string): caminho absoluto do arquivo com as informações da atividade.
+                path : string
+                    Caminho absoluto do arquivo de 'log' com as informações do CodeMirror.
 
             Returns:
-                atividade (string): A atividade realizada.
+                (start_date, end_date) : tuple(string, string)
+                    Uma Tupla contendo as datas de início e término da tentativa de solucionar o exercício.
 
             Error:
-                Em caso de erro retorna None.
+                Em caso de erro retorna uma tupla com duas strings vazias.
         """
-        arquivo = None
-        data = dict()
+        start_date = None
+        end_date = None
+
         try:
-            arquivo = open(path, 'r')
-            lines = arquivo.readlines()
-            find_grade = False
+            with open(path, 'r') as f:
+                lines = f.readlines()
 
-            sub = len([x.strip() for x in lines if x.startswith('== SU')])
-            data['n_submissoes'] = sub
+                start_date = lines[0].split('#')[0]
+                end_date = lines[-1].split('#')[0]
 
-            test = len([x.strip() for x in lines if x.startswith('== TE')])
-            data['n_testes'] = test
+                lines.clear()
+                del lines
+        except OSError:
+            Logger.error('Erro ao tentar recuperar dados do CodeMirror!')
 
-            err = len([x.strip() for x in lines if x.startswith('== ER')])
-            data['n_erros'] = err
+        return start_date, end_date
 
-            found_erros = [x.strip().split(':')[0] for x in lines if re.search(r"^[a-zA-Z0-9_\.]+Error", x)]
-            Util.register_errors(found_erros)
+    @staticmethod
+    def __get_data_from_file(path):
+        """
+            Retorna os dados referentes as execuções (tentativas de solução) de um exercício a partir do arquivo '.log'
 
-            for line in lines:
-                if find_grade:
-                    find_grade = False
-                    data['nota_final'] = float(line.strip()[:-1])
-                elif line.startswith('-- GR'):
-                    find_grade = True
-                    continue
+            Args:
+                path : string
+                    Caminho absoluto do arquivo de 'log' com as informações das execuções feitas pelo estudante.
 
-            lines.clear()
-            del lines
+            Returns:
+                data : list
+                    Uma lista com as informações extraídas do arquivo de 'log'.
+                    index 0: número de submissões
+                    index 1: número de testes
+                    index 2: número de erros
+                    index 3: nota final
+                    index 4: True (acertou o exercício) / False (errou o exercício)
 
-        except Exception as e:
-            Logger.error(str(e))
-            Util.wait_user_input()
-        finally:
-            if arquivo is not None:
-                arquivo.close()
+            Error:
+                Em caso de erro retorna uma lista vazia.
+        """
+        subm = NaN
+        test = NaN
+        err = NaN
+        nota = NaN
+        acertou = False
 
-        return data
+        try:
+            with open(path, 'r') as f:
+                achou_nota = False
+
+                for line in f.readlines():
+                    line = line.strip()
+
+                    if achou_nota:
+                        nota = line
+                        achou_nota = False
+
+                    if line.startswith('== S'):
+                        subm += 1
+                    elif line.startswith('== T'):
+                        test += 1
+                    elif line.startswith('-- ER'):
+                        err += 1
+                    elif line.startswith('-- GRAD'):
+                        achou_nota = True
+                    elif re.search(r"^[a-zA-Z0-9_\.]+Error", line):
+                        Util.register_errors(line.split(':')[0])
+
+                try:
+                    nota = float(nota[:-2])
+                    if nota > 99.99:
+                        acertou = True
+
+                except ValueError:
+                    Logger.error(f'Erro ao tentar obter nota do estudante, na linha.')
+
+        except OSError:
+            Logger.error(f'Erro ao tentar ler arquivo de execução: {path}')
+
+        return [subm, test, err, nota, acertou]
 
     @staticmethod
     def get_execucoes(estudante):
@@ -79,6 +122,7 @@ class ControllerExecucao:
             Returns:
                 execucoes : list
                     Todas as execuções realizadas por um estudante, para as questões selecionadas em atividades que o estudante resolveu.
+                    @see model.execucao.Execucao
 
             Error:
                 Em caso de erro retorna uma lista vazia.
@@ -91,26 +135,30 @@ class ControllerExecucao:
                 for entry in entries:
                     # se a 'entrada' for um arquivo de extensão '.log', então corresponde as execuções de uma questão.
                     if entry.is_file() and entry.path.endswith('.log'):
-                        Logger.debug(f'Arquivo: {entry.path}')
-                        data = ControllerExecucao.__get_file_data(entry.path)
+                        Logger.debug(f'Arquivo de execução: {entry.path}')
 
-                        data['atividade_id'] = int(entry.name[:-4].split('_')[0])
-                        data['exercicio_id'] = int(entry.name[:-4].split('_')[1])
-                        acertou = True if data.get('nota_final', 0.0) > 99.99 else False
+                        # divide o nome do arquivo obtendo os códigos da atividade e exercício.
+                        aid, eid, *_ = entry.name[:-4].split('_')
+                        data = ControllerExecucao.__get_data_from_file(entry.path)
+                        data_inicio, data_termino = ControllerExecucao.__get_codemirror_dates(f'{estudante.path}/codemirror/{entry.name}')
 
-                        execucao = Execucao(data.get('atividade_id', 0),
-                                            data.get('exercicio_id', 0),
-                                            data.get('n_submissoes', 0),
-                                            data.get('n_testes', 0),
-                                            data.get('n_erros', 0),
-                                            data.get('nota_final', 0.0),
-                                            acertou)
+                        execucao = Execucao(
+                            int(aid),
+                            int(eid),
+                            data_inicio,
+                            data_termino,
+                            data[0],
+                            data[1],
+                            data[2],
+                            data[3],
+                            data[4]
+                        )
+
                         # execucao.print_info()
-                        Logger.info(f'Execução encontrada!')
                         execucoes.append(execucao)
 
         except OSError:
-            Logger.error(f'Erro ao acessar o caminho informado: {estudante.path}/executions')
+            Logger.error(f'Erro ao acessar o diretório de execuções: {estudante.path}/executions')
             Util.wait_user_input()
 
         return execucoes

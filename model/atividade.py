@@ -1,6 +1,19 @@
 class Atividade:
 
-    def __init__(self, codigo, titulo, path, turma_id, data_inicio, data_termino, linguagem, tipo, peso, n_questoes, blocos_ex):
+    def __init__(
+        self,
+        codigo,
+        titulo,
+        path,
+        turma_id,
+        data_inicio,
+        data_termino,
+        linguagem,
+        tipo,
+        peso,
+        n_questoes,
+        blocos_ex
+    ):
         self.id = codigo
         self.path = path
         self.titulo = titulo

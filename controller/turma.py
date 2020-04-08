@@ -15,7 +15,9 @@ class ControllerTurma:
             Cada turma corresponde a uma pasta dentro do diretório, '220' por exemplo são os dados da turma de número 220.
 
             Returns:
-                turmas (list): Todas as turmas do período.
+                turmas : list
+                    Todas as turmas do período.
+                    @see model.turma.Turma
 
             Error:
                 Em caso de erro retorna uma lista vazia.
@@ -27,12 +29,11 @@ class ControllerTurma:
                 for entry in entries:
                     # se a 'entrada' for uma diretório (pasta) então corresponde a uma 'turma'
                     if entry.is_dir():
-                        Logger.debug(f'Diretório: {entry.path}')
+                        Logger.debug(f'Diretório da turma: {entry.path}')
                         code = int(entry.name)
                         descricao = ControllerTurma.__get_turma_descricao(f'{entry.path}/assessments')
                         turma = Turma(code, descricao, entry.path)
                         # turma.print_info()
-                        Logger.info(f'Turma encontrada!')
                         turmas.append(turma)
 
         except OSError:
@@ -47,43 +48,32 @@ class ControllerTurma:
             Retorna uma string com a descrição de uma turma, obtida de um dos arquivo de atividades (assessments) da turma.
 
             Args:
-                path (string): caminho absoluto do diretório onde se encontra as atividades da turma.
+                path : string
+                    Caminho absoluto do diretório onde se encontra as atividades da turma.
 
             Returns:
-                descricao (string): A descrição da turma.
+                descricao : string
+                    A descrição da turma.
 
             Error:
                 Em caso de erro retorna uma string vazia.
         """
-        descricao = ''
-        arquivo = None
+        descricao = None
         try:
-
-            # assessment_path: caminho para alguma atividade da turma
-            assessment_path = ''
-
             # coleta todas os arquivos/pastas no diretório informado (diretório de atividades da turma)
             with os.scandir(path) as entries:
                 for entry in entries:
                     # se a 'entrada' for um arquivo de extensão '.data' então corresponde atividade
                     if entry.is_file() and entry.path.endswith('.data'):
-                        assessment_path = entry.path
+                        with open(entry.path, 'r') as f:
+                            # terceira linha eh onde se encontra a descrição da turma
+                            # exemplo:
+                            # ---- class name: Introdução à Programação de Computadores
+                            descricao = f.readlines()[2][17:-1]
                         break
 
-            # obtemos a descrição da turma que se encontra dentro do arquivo da atividade
-            arquivo = open(assessment_path, 'r')
-
-            # terceira linha eh onde se encontra a descrição da turma
-            # exemplo:
-            # ---- class name: Introdução à Programação de Computadores
-            descricao = arquivo.readlines()[2][17:-1]
-
         except OSError:
-            Logger.error(f'Erro ao acessar o caminho informado: {path}')
+            Logger.error(f'Erro ao tentar obter a descrição da turma pelo arquivo de atividades: {path}')
             Util.wait_user_input()
-        finally:
-            if arquivo is not None:
-                arquivo.close()
 
         return descricao
-

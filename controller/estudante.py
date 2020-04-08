@@ -1,4 +1,5 @@
 import os
+from numpy import NaN
 
 from model.estudante import Estudante
 
@@ -17,7 +18,9 @@ class ControllerEstudante:
             Cada aluno possui suas informações dentro de uma pasta nomeada com seu 'id'.
 
             Returns:
-                estudantes (lista): Todos os estudantes matriculados na turma.
+                estudantes : list
+                    Todos os estudantes matriculados na turma.
+                    @see model.estudante.Estudante
 
             Error:
                 Em caso de erro retorna uma lista vazia.
@@ -31,27 +34,31 @@ class ControllerEstudante:
                 for entry in entries:
                     # se a 'entrada' for um diretório, então corresponde as informações de um 'estudante'.
                     if entry.is_dir():
-                        Logger.debug(f'Arquivo: {entry.path}')
-                        data = ControllerEstudante.__get_file_data(f'{entry.path}/user.data')
-                        estudante = Estudante(int(entry.name),
-                                              entry.path,
-                                              data.get('curso_id', 0),
-                                              data.get('curso_nome', ''),
-                                              data.get('instituicao_id', 0),
-                                              data.get('instituicao_nome', ''),
-                                              data.get('escola_nome', ''),
-                                              data.get('escola_tipo', ''),
-                                              data.get('escola_turno', ''),
-                                              data.get('escola_ano_grad', 0),
-                                              data.get('sexo', ''),
-                                              data.get('ano_nascimento', 0),
-                                              data.get('estado_civil', ''),
-                                              data.get('tem_filhos', False))
+                        Logger.debug(f'Arquivo de estudante: {entry.path}')
+
+                        data = ControllerEstudante.__get_data_from_file(f'{entry.path}/user.data')
+
+                        estudante = Estudante(
+                            int(entry.name),
+                            entry.path,
+                            data[0],
+                            data[1],
+                            data[2],
+                            data[3],
+                            data[4],
+                            data[5],
+                            data[6],
+                            data[7],
+                            data[8],
+                            data[9],
+                            data[10],
+                            data[11]
+                        )
+
                         data.clear()
                         del data
 
                         # estudante.print_info()
-                        Logger.info(f'Estudante encontrado!')
                         estudantes.append(estudante)
 
         except OSError:
@@ -61,48 +68,79 @@ class ControllerEstudante:
         return estudantes
 
     @staticmethod
-    def __get_file_data(path):
-        # TODO: doc
-        arquivo = None
-        data = dict()
+    def __get_data_from_file(path):
+        """
+            Retorna os dados referentes ao estudante de dentro do arquivo 'user.data'
 
+            Args:
+                path : string
+                    Caminho absoluto do arquivo do arquivo 'user.data' que contém as informações do estudante.
+
+            Returns:
+                data : list
+                    Uma lista com as informações extraídas do arquivo 'user.data'.
+                    index 0: código do curso do estudante
+                    index 1: nome do curso do estudante
+                    index 2: código da instituição de ensino superior
+                    index 3: nome da instituição de ensino superior
+                    index 4: nome da instituição de ensino médio
+                    index 5: tipo da instituição de ensino médio
+                    index 6: turno em que o estudante cursou o ensino médio
+                    index 7: ano de graduação no ensino médio
+                    index 8: sexo do estudante
+                    index 9: ano de nascimento do estudante
+                    index 10: estado civil
+                    index 11: 'True' se o estudante possui filhos, 'False' caso contrário
+
+            Error:
+                Em caso de erro retorna uma lista vazia.
+        """
+        data = [NaN, None, NaN, None, None, None, None, NaN, None, NaN, None, None]
         try:
-            arquivo = open(path, 'r')
-            lines = arquivo.readlines()
-
-            for index, line in enumerate(lines, start=1):
-                line = line.lower().strip()
-                if index == 2 and line.startswith('---- course id:'):
-                    data['curso_id'] = int(ControllerEstudante.__get_property_value(line))
-                elif index == 3 and line.startswith('---- course name:'):
-                    data['curso_nome'] = ControllerEstudante.__get_property_value(line)
-                elif index == 4 and line.startswith('---- institution id:'):
-                    data['instituicao_id'] = int(ControllerEstudante.__get_property_value(line))
-                elif index == 5 and line.startswith('---- institution name:'):
-                    data['instituicao_nome'] = ControllerEstudante.__get_property_value(line)
-                elif index == 7 and line.startswith('---- high school name:'):
-                    data['escola_nome'] = ControllerEstudante.__get_property_value(line)
-                elif index == 8 and line.startswith('---- school type:'):
-                    data['escola_tipo'] = ControllerEstudante.__get_property_value(line)
-                elif index == 9 and line.startswith('---- shift:'):
-                    data['escola_turno'] = ControllerEstudante.__get_property_value(line)
-                elif index == 10 and line.startswith('---- graduation year:'):
-                    data['escola_ano_grad'] = int(ControllerEstudante.__get_property_value(line))
-                elif index == 28 and line.startswith('---- sex:'):
-                    data['sexo'] = ControllerEstudante.__get_property_value(line)
-                elif index == 29 and line.startswith('---- year of birth:'):
-                    data['ano_nascimento'] = int(ControllerEstudante.__get_property_value(line))
-                elif index == 30 and line.startswith('---- civil status:'):
-                    data['estado_civil'] = ControllerEstudante.__get_property_value(line)
-                elif index == 31 and line.startswith('---- have kids:'):
-                    data['tem_filhos'] = True if ControllerEstudante.__get_property_value(line) == 'yes' else False
+            with open(path, 'r') as f:
+                for index, line in enumerate(f.readlines(), start=0):
+                    line = line.strip()
+                    if line.startswith('---- cou') and index == 0:
+                        try:
+                            data[0] = int(ControllerEstudante.__get_property_value(line))
+                        except ValueError:
+                            Logger.error(f'Erro ao obter código do curso do estudante: {line}')
+                    elif line.startswith('---- cou') and index == 2:
+                        data[1] = ControllerEstudante.__get_property_value(line)
+                    elif line.startswith('---- in') and index == 3:
+                        try:
+                            data[2] = int(ControllerEstudante.__get_property_value(line))
+                        except ValueError:
+                            Logger.error(f'Erro ao obter código do curso do estudante: {line}')
+                    elif line.startswith('---- in') and index == 4:
+                        data[3] = ControllerEstudante.__get_property_value(line)
+                    elif line.startswith('---- hi'):
+                        data[4] = ControllerEstudante.__get_property_value(line)
+                    elif line.startswith('---- sch'):
+                        data[5] = ControllerEstudante.__get_property_value(line)
+                    elif line.startswith('---- shi'):
+                        data[6] = ControllerEstudante.__get_property_value(line)
+                    elif line.startswith('---- gr'):
+                        try:
+                            data[7] = int(ControllerEstudante.__get_property_value(line))
+                        except ValueError:
+                            Logger.error(f'Erro ao obter ano de graduação no ensino médio: {line}')
+                    elif line.startswith('---- sex'):
+                        data[8] = ControllerEstudante.__get_property_value(line)
+                    elif line.startswith('---- year o'):
+                        try:
+                            data[9] = int(ControllerEstudante.__get_property_value(line))
+                        except ValueError:
+                            Logger.error(f'Erro ao obter ano de nascimento: {line}')
+                    elif line.startswith('---- civ'):
+                        data[10] = ControllerEstudante.__get_property_value(line)
+                    elif line.startswith('---- hav'):
+                        if ControllerEstudante.__get_property_value(line) == 'yes':
+                            data[-1] = True
 
         except OSError:
             Logger.error(f'Erro ao acessar o arquivo de estudante: {path}')
             Util.wait_user_input()
-        finally:
-            if arquivo is not None:
-                arquivo.close()
 
         return data
 

@@ -1,4 +1,3 @@
-# TODO: metrias com >30 resoluções
 import os
 import csv
 
@@ -14,7 +13,7 @@ from util.utilidades import Util
 def save_execucoes(lista_execucoes, file_name):
     Logger.info(f'Salvando execuções no arquivo: {file_name}')
     with open(file_name, 'w') as file:
-        file.write('periodo,turma_id,estudante_id,atividade_id,exercicio_id,n_submissoes,n_testes,n_erros,nota_final,acertou\n')
+        file.write('periodo,turma_id,estudante_id,atividade_id,exercicio_id,data_inicio,data_termino,n_submissoes,n_testes,n_erros,nota_final,acertou\n')
         writter = csv.writer(file)
         for e in lista_execucoes:
             writter.writerow(e)
@@ -95,6 +94,7 @@ def main():
                 ])
 
             for estudante in ControllerEstudante.get_estudantes(turma):
+
                 lista_estudantes.append([
                     periodo.descricao,
                     turma.id,
@@ -120,6 +120,8 @@ def main():
                         estudante.id,
                         execucao.atividade_id,
                         execucao.exercicio_id,
+                        execucao.data_inicio,
+                        execucao.data_termino,
                         execucao.n_submissoes,
                         execucao.n_testes,
                         execucao.n_erros,

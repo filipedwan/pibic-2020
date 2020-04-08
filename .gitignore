@@ -1,0 +1,17 @@
+dataset/
+
+csv/
+
+por_questão_lloc.py
+por_questão_variable.py
+extract_metrics.py
+
+.idea/
+
+*.pyc
+model/__pycache/*.pyc
+util/__pycache/*.pyc
+
+logs/*
+
+radon_exemplo.py
