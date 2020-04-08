@@ -93,9 +93,10 @@ class ControllerExecucao:
                         Util.register_errors(line.split(':')[0])
 
                 try:
-                    nota = float(nota[:-1])
-                    if nota > 99.99:
-                        acertou = True
+                    if nota:
+                        nota = float(nota[:-1])
+                        if nota > 99.99:
+                            acertou = True
 
                 except TypeError:
                     Logger.error(f'Erro ao tentar obter nota do estudante, na linha: {nota}')
