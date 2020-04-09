@@ -33,8 +33,11 @@ class ControllerExecucao:
             with open(path, 'r') as f:
                 lines = f.readlines()
 
-                start_date = lines[0].split('#')[0]
-                end_date = lines[-1].split('#')[0]
+                start_date = lines[0]
+                end_date = lines[-1]
+
+                start_date = start_date[:start_date.find('#')]
+                end_date = end_date[:end_date.find('#')]
 
                 lines.clear()
                 del lines
@@ -64,15 +67,17 @@ class ControllerExecucao:
             Error:
                 Em caso de erro retorna uma lista vazia.
         """
-        subm = NaN
-        test = NaN
-        err = NaN
-        nota = NaN
+        subm = 0
+        test = 0
+        err = 0
+        nota = 0.0
         acertou = False
 
         try:
             with open(path, 'r') as f:
                 achou_nota = False
+
+                erros = []
 
                 for line in f.readlines():
                     line = line.strip()
@@ -89,15 +94,19 @@ class ControllerExecucao:
                         err += 1
                     elif line.startswith('-- GRAD'):
                         achou_nota = True
-                    elif re.search(r"^[a-zA-Z0-9_\.]+Error", line):
-                        Util.register_errors(line.split(':')[0])
+                    elif re.search(r"^([\w_\.]+Error)", line):
+                        m = re.match(r"^([\w_\.]+Error)", line)
+                        if m:
+                            erros.append(m.group(0))
+
+                if len(erros):
+                    Util.register_errors(erros)
 
                 try:
-                    if nota:
+                    if isinstance(nota, str):
                         nota = float(nota[:-1])
-                        if nota > 99.99:
-                            acertou = True
-
+                    if nota > 99.99:
+                        acertou = True
                 except TypeError:
                     Logger.error(f'Erro ao tentar obter nota do estudante, na linha: {nota}')
                 except ValueError:
@@ -165,3 +174,10 @@ class ControllerExecucao:
             Util.wait_user_input()
 
         return execucoes
+
+    @staticmethod
+    def __get_property_value(text):
+        idx = text.find(':')
+        if idx > 0:
+            return text.strip()[:idx]
+        return None

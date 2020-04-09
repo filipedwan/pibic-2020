@@ -31,7 +31,7 @@ def save_estudantes(lista_estudantes, file_name):
 def save_atividades(lista_atividades, file_name):
     Logger.info(f'Salvando atividades no arquivo: {file_name}')
     with open(file_name, 'w') as file:
-        file.write('turma_id,atividade_id,titulo,tipo,linguagem,peso,data_inicio,data_termino,n_exercicios,blocos_exercicios\n')
+        file.write('turma_id,atividade_id,titulo,tipo,linguagem,peso,data_inicio,data_termino,n_blocos,blocos\n')
         writter = csv.writer(file)
         for a in lista_atividades:
             writter.writerow(a)
@@ -94,7 +94,6 @@ def main():
                 ])
 
             for estudante in ControllerEstudante.get_estudantes(turma):
-
                 lista_estudantes.append([
                     periodo.descricao,
                     turma.id,
@@ -154,8 +153,8 @@ def main():
     lista_execucoes.clear()
     del lista_execucoes
 
-    with open(f'{csv_path}/error_report.csv', 'w') as f:
-        f.write('erro_name,error_count\n')
+    with open(f'{csv_path}/erros_comuns.csv', 'w') as f:
+        f.write('tipo,n_ocorrencias\n')
         writter = csv.writer(f)
         for name, count in Util.get_unique_errors():
             writter.writerow([name, count])

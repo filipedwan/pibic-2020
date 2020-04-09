@@ -100,7 +100,7 @@ class ControllerEstudante:
             with open(path, 'r') as f:
                 for index, line in enumerate(f.readlines(), start=0):
                     line = line.strip()
-                    if line.startswith('---- cou') and index == 0:
+                    if line.startswith('---- cou') and index == 1:
                         try:
                             data[0] = int(ControllerEstudante.__get_property_value(line))
                         except ValueError:
@@ -137,6 +137,8 @@ class ControllerEstudante:
                     elif line.startswith('---- hav'):
                         if ControllerEstudante.__get_property_value(line) == 'yes':
                             data[-1] = True
+                        else:
+                            data[-1] = False
 
         except OSError:
             Logger.error(f'Erro ao acessar o arquivo de estudante: {path}')
@@ -146,7 +148,8 @@ class ControllerEstudante:
 
     @staticmethod
     def __get_property_value(text):
-        # TODO: doc
-        value = str(text).split(':')[-1].strip()
-        return value
+        idx = text.find(':')
+        if idx >= 0:
+            return text.strip()[idx+2:]
+        return None
 
