@@ -1,69 +1,24 @@
-import os
-import csv
+from controllers import *
+from util import *
 
-from controller.atividade import ControllerAtividade
-from controller.estudante import ControllerEstudante
-from controller.execucao import ControllerExecucao
-from controller.periodo import ControllerPeriodo
-from controller.turma import ControllerTurma
-from util.logger import Logger
-from util.utilidades import Util
-
-
-def save_execucoes(lista_execucoes, file_name):
-    Logger.info(f'Salvando execuções no arquivo: {file_name}')
-    with open(file_name, 'w') as file:
-        file.write('periodo,turma_id,estudante_id,atividade_id,exercicio_id,data_inicio,data_termino,n_submissoes,n_testes,n_erros,nota_final,acertou\n')
-        writter = csv.writer(file)
-        for e in lista_execucoes:
-            writter.writerow(e)
-
-
-def save_estudantes(lista_estudantes, file_name):
-    Logger.info(f'Salvando estudantes no arquivo: {file_name}')
-    with open(file_name, 'w') as file:
-        file.write('periodo,turma_id,estudante_id,curso_id,curso_nome,instituicao_id,instituicao_nome,escola_nome,escola_tipo,escola_turno,escola_ano_grad,sexo,ano_nascimento,estado_civil,tem_filhos\n')
-        writter = csv.writer(file)
-        for e in lista_estudantes:
-            writter.writerow(e)
-
-
-def save_atividades(lista_atividades, file_name):
-    Logger.info(f'Salvando atividades no arquivo: {file_name}')
-    with open(file_name, 'w') as file:
-        file.write('turma_id,atividade_id,titulo,tipo,linguagem,peso,data_inicio,data_termino,n_blocos,blocos\n')
-        writter = csv.writer(file)
-        for a in lista_atividades:
-            writter.writerow(a)
-
-
-def save_turmas(lista_turmas, file_name):
-    Logger.info(f'Salvando turmas no arquivo: {file_name}')
-    with open(file_name, 'w') as file:
-        file.write('periodo,turma_id,turma_descricao\n')
-        writter = csv.writer(file)
-        for t in lista_turmas:
-            writter.writerow(t)
-
-
-def save_periodos(lista_periodos, file_name):
-    Logger.info(f'Salvando períodos no arquivo: {file_name}')
-    with open(file_name, 'w') as file:
-        file.write('periodo\n')
-        writter = csv.writer(file)
-        for p in lista_periodos:
-            writter.writerow(p)
+__version__ = '1.1.0'
 
 
 def main():
+    import os
+
     Util.clear_console()
 
     # cwd (current working dir): diretório de trabalho atual
     cwd = os.getcwd()
     # dataset_path: diretório onde se encontra o dataset do codebenh
     dataset_path = f'{cwd}/dataset/'
-    # csv_path: diretório dos arquivos de saída
-    csv_path = f'{cwd}/csv'
+
+    # diretório dos datasets de saída
+    try:
+        os.mkdir(f'{cwd}/csv')
+    except OSError:
+        pass
 
     lista_turmas = []
     lista_estudantes = []
@@ -128,32 +83,27 @@ def main():
                         execucao.acertou
                     ])
 
-    try:
-        os.mkdir(csv_path)
-    except OSError:
-        pass
-
-    save_periodos(lista_periodos, f'{csv_path}/periodos.csv')
+    ControllerPeriodo.save_periodos(lista_periodos)
     lista_periodos.clear()
     del lista_periodos
 
-    save_turmas(lista_turmas, f'{csv_path}/turmas.csv')
+    ControllerTurma.save_turmas(lista_turmas)
     lista_turmas.clear()
     del lista_turmas
 
-    save_atividades(lista_atividades, f'{csv_path}/atividades.csv')
+    ControllerAtividade.save_atividades(lista_atividades)
     lista_atividades.clear()
     del lista_atividades
 
-    save_estudantes(lista_estudantes, f'{csv_path}/estudantes.csv')
+    ControllerEstudante.save_estudantes(lista_estudantes)
     lista_estudantes.clear()
     del lista_estudantes
 
-    save_execucoes(lista_execucoes, f'{csv_path}/execucoes.csv')
+    ControllerExecucao.save_execucoes(lista_execucoes)
     lista_execucoes.clear()
     del lista_execucoes
 
-    with open(f'{csv_path}/erros_comuns.csv', 'w') as f:
+    with open(f'{cwd}/csv/erros_comuns.csv', 'w') as f:
         f.write('tipo,n_ocorrencias\n')
         writter = csv.writer(f)
         for name, count in Util.get_unique_errors():
