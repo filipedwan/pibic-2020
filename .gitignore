@@ -1,14 +1,15 @@
 .idea/
 csv/
 dataset/
-prof_solucoes/
+solutions/
 logs/
+docs/
 
+*.pdf
 *.pyc
+
 model/__pycache/*.pyc
 util/__pycache/*.pyc
 
-por_questão_lloc.py
-por_questão_variable.py
-extract_metrics.py
+extract_solutions.py
 radon_exemplo.py
