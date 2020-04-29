@@ -1,7 +1,7 @@
 from extractors import *
 from util import *
 
-__version__ = '1.1.0'
+__version__ = '2.0.0'
 # cwd (current working dir): diretório de trabalho atual
 __cwd__ = os.getcwd()
 # dataset_path: diretório onde se encontra o dataset do codebenh
