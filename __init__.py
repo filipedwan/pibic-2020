@@ -1,81 +1,49 @@
-from controllers import *
+from extractors import *
 from util import *
 
 __version__ = '1.1.0'
+# cwd (current working dir): diretório de trabalho atual
+__cwd__ = os.getcwd()
+# dataset_path: diretório onde se encontra o dataset do codebenh
+__dataset_dir__ = f'{__cwd__}/cb_dataset_v1.10/'
+# diretório dos arquivos de saída (datasets)
+__output_dir__ = f'{__cwd__}/csv'
 
 
 def main():
-    import os
-
+    # limpa o console de saída
     Util.clear_console()
-    # cwd (current working dir): diretório de trabalho atual
-    cwd = os.getcwd()
-    # dataset_path: diretório onde se encontra o dataset do codebenh
-    dataset_path = f'{cwd}/dataset/'
-    csv_output_path = f'{cwd}/csv'
-    periodos_csv_file = f'{csv_output_path}/periodos.csv'
-    turmas_csv_file = f'{csv_output_path}/turmas.csv'
-    atividades_csv_file = f'{csv_output_path}/atividades.csv'
-    estudantes_csv_file = f'{csv_output_path}/estudantes.csv'
-    execucoes_csv_file = f'{csv_output_path}/execucoes.csv'
-    solucoes_csv_file = f'{csv_output_path}/solucoes.csv'
 
-    # diretório dos datasets de saída
-    try:
-        if not os.path.exists(csv_output_path):
-            os.mkdir(csv_output_path)
+    # cria a pasta para os arquivos de saídade (CSV)
+    # recria a pasta e caso já exista
+    Util.create_output_dir(__output_dir__)
 
-        with open(periodos_csv_file, 'w') as f:
-            f.write(Periodo.get_columns() + os.linesep)
+    # configura o módulo de log
+    Logger.configure()
 
-        with open(turmas_csv_file, 'w') as f:
-            f.write(Turma.get_columns() + os.linesep)
-
-        with open(atividades_csv_file, 'w') as f:
-            f.write(Atividade.get_columns() + os.linesep)
-
-        with open(estudantes_csv_file, 'w') as f:
-            f.write(Estudante.get_columns() + os.linesep)
-
-        with open(execucoes_csv_file, 'w') as f:
-            f.write(Execucao.get_columns() + os.linesep)
-
-        with open(solucoes_csv_file, 'w') as f:
-            f.write(Execucao.get_columns() + os.linesep)
-
-    except OSError:
-        pass
-
-    periodos = ControllerPeriodo.get_periodos(dataset_path)
-    ControllerPeriodo.save_periodos(periodos, periodos_csv_file)
+    periodos = PeriodoExtractor.get_periodos(__dataset_dir__)
+    PeriodoExtractor.save_periodos(periodos, f'{__output_dir__}/periodos.csv')
 
     for periodo in periodos:
-        turmas = ControllerTurma.get_turmas_periodo(periodo)
-        ControllerTurma.save_turmas(turmas, turmas_csv_file)
-        for turma in turmas:
-            atividades = ControllerAtividade.get_atividades(turma)
-            ControllerAtividade.save_atividades(atividades, atividades_csv_file)
-            del atividades
+        TurmaExtractor.get_turmas_periodo(periodo)
+        TurmaExtractor.save_turmas(periodo.turmas, f'{__output_dir__}/turmas.csv')
+        for turma in periodo.turmas:
+            AtividadeExtractor.get_atividades(turma)
+            AtividadeExtractor.save_atividades(turma.atividades, f'{__output_dir__}/atividades.csv')
 
-            estudantes = ControllerEstudante.get_estudantes(turma)
-            ControllerEstudante.save_estudantes(estudantes, estudantes_csv_file)
-            for estudante in estudantes:
-                execucoes = ControllerExecucao.get_execucoes(estudante)
-                ControllerExecucao.save_execucoes(execucoes, execucoes_csv_file)
-                del execucoes
-            del estudantes
-        del turmas
-    del periodos
+            EstudanteExtractor.get_estudantes(turma)
+            EstudanteExtractor.save_estudantes(turma.estudantes, f'{__output_dir__}/estudantes.csv')
+            for estudante in turma.estudantes:
+                ExecucaoExtractor.get_execucoes(estudante)
+                ExecucaoExtractor.save_execucoes(estudante.execucoes, f'{__output_dir__}/execucoes.csv')
 
-    solutions_metrics = ControllerSolucao.get_metricas(f'{cwd}/solutions')
-    ControllerSolucao.save_metricas(solutions_metrics, solucoes_csv_file)
-
-    with open(f'{cwd}/csv/erros_comuns.csv', 'w') as f:
-        f.write('tipo,n_ocorrencias\n')
-        writter = csv.writer(f)
-        for name, count in Util.get_unique_errors():
-            writter.writerow([name, count])
+    solutions_metrics = SolucaoExtractor.get_metricas(f'{__cwd__}/solutions')
+    SolucaoExtractor.save_metricas(solutions_metrics, f'{__output_dir__}/solucoes.csv')
 
 
 if __name__ == '__main__':
+    import time
+    start_time = time.time()
     main()
+    time_elapsed = time.strftime('%H:%M:%S', time.gmtime(time.time() - start_time))
+    print(f'Tempo de Execução: {time_elapsed}')

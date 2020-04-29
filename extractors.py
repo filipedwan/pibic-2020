@@ -6,7 +6,7 @@ from typing import List
 
 from util import Util
 from util import Logger
-from numpy import NaN
+from datetime import datetime
 
 from radon.visitors import ComplexityVisitor
 from radon.raw import analyze
@@ -15,7 +15,7 @@ from radon.metrics import h_visit
 from model import *
 
 
-class ControllerPeriodo:
+class PeriodoExtractor:
 
     @staticmethod
     def get_periodos(path: str):
@@ -30,10 +30,11 @@ class ControllerPeriodo:
         # coleta todas as 'entradas' (arquivos ou pastas) no caminho informado (path).
         with os.scandir(path) as entries:
             for entry in entries:
-                if entry.is_dir():  # se for uma pasta então corresponde a um período letivo
-                    Logger.debug(f'Diretório do período: {entry.path}')
-                    p = Periodo(entry.name, entry.path)
-                    periodos.append(p)
+                with os.scandir(entry.path) as folders:
+                    for folder in folders:
+                        Logger.debug(f'Diretório do período: {folder.path}')
+                        p = Periodo(folder.name, folder.path)
+                        periodos.append(p)
         return periodos
 
     @staticmethod
@@ -53,7 +54,9 @@ class ControllerPeriodo:
                 writter.writerow(p.get_row())
 
 
-class ControllerTurma:
+class TurmaExtractor:
+
+    __atividade_file_extension = '.date'
 
     @staticmethod
     def __get_turma_descricao(path: str, turma: Turma):
@@ -70,12 +73,15 @@ class ControllerTurma:
         with os.scandir(path) as entries:
             for entry in entries:
                 # se a 'entrada' for um arquivo de extensão '.data' então corresponde atividade
-                if entry.is_file() and entry.path.endswith('.data'):
+                if entry.is_file() and entry.path.endswith(TurmaExtractor.__atividade_file_extension):
                     with open(entry.path, 'r') as f:
-                        # terceira linha eh onde se encontra a descrição da turma
-                        # exemplo:
-                        # ---- class name: Introdução à Programação de Computadores
-                        turma.descricao = f.readlines()[2][17:-1]
+                        line = f.readline()
+                        while line:
+                            # ---- class name: Introdução à Programação de Computadores
+                            if line.startswith('---- class name:'):
+                                turma.descricao = line.strip()[17:]
+                                break
+                            line = f.readline()
                     break
 
     @staticmethod
@@ -87,7 +93,6 @@ class ControllerTurma:
         :param periodo:  O Período letivo do qual devem ser recuperadas as Turmas, :class:`Periodo`.
         :type periodo: Periodo
         """
-        turmas = []
         # coleta todas os arquivos/pastas dentro do diretório do período.
         with os.scandir(periodo.path) as entries:
             for entry in entries:
@@ -97,12 +102,11 @@ class ControllerTurma:
                         Logger.debug(f'Diretório da turma: {entry.path}')
                         code = int(entry.name)
                         turma = Turma(periodo, code, entry.path)
-                        ControllerTurma.__get_turma_descricao(f'{entry.path}/assessments', turma)
-                        turmas.append(turma)
+                        TurmaExtractor.__get_turma_descricao(f'{entry.path}/assessments', turma)
+                        periodo.turmas.append(turma)
                     except Exception as e:
                         print(f'Erro ao recuperar dados da turma: {entry.path}\nErro: {str(e)}')
                         Util.wait_user_input()
-        return turmas
 
     @staticmethod
     def save_turmas(turmas: List[Turma], path: str):
@@ -121,7 +125,9 @@ class ControllerTurma:
                 writter.writerow(turma.get_row())
 
 
-class ControllerAtividade:
+class AtividadeExtractor:
+
+    __atividade_file_extension = '.data'
 
     @staticmethod
     def __get_data_from_file(path: str, atividade: Atividade):
@@ -174,26 +180,24 @@ class ControllerAtividade:
         :param turma: A Turma das Atividades, :class:`model.Turma`.
         :type turma: Turma
         """
-        atividades = []
         # coleta todas os arquivos/pastas dentro do diretório de atividades da turma
         with os.scandir(f'{turma.path}/assessments') as entries:
             for entry in entries:
                 # se a 'entrada' for um arquivo de extensão '.data', então corresponde a uma atividade.
-                if entry.is_file() and entry.path.endswith('.data'):
+                if entry.is_file() and entry.path.endswith(AtividadeExtractor.__atividade_file_extension):
                     try:
                         Logger.debug(f'Arquivo de Atividade: {entry.path}')
-                        code = int(entry.path.split('/')[-1][:-5])
+                        code = int(entry.path.split('/')[-1].replace(AtividadeExtractor.__atividade_file_extension, ''))
                         atividade = Atividade(
                             turma,
                             code,
                             entry.path
                         )
-                        ControllerAtividade.__get_data_from_file(entry.path, atividade)
-                        atividades.append(atividade)
+                        AtividadeExtractor.__get_data_from_file(entry.path, atividade)
+                        turma.atividades.append(atividade)
                     except Exception:
                         Logger.error(f'Erro obter atividade: {entry.path}')
                         Util.wait_user_input()
-        return atividades
 
     @staticmethod
     def save_atividades(atividades: List[Atividade], path: str):
@@ -212,7 +216,9 @@ class ControllerAtividade:
                 writter.writerow(atividade.get_row())
 
 
-class ControllerEstudante:
+class EstudanteExtractor:
+
+    __estudante_file_name = 'user.data'
 
     @staticmethod
     def __get_data_from_file(path: str, estudante: Estudante):
@@ -229,29 +235,29 @@ class ControllerEstudante:
             for index, line in enumerate(f.readlines(), start=0):
                 line = line.strip()
                 if line.startswith('---- cou') and index == 1:
-                    estudante.curso_id = int(ControllerEstudante.__get_property_value(line))
+                    estudante.curso_id = int(EstudanteExtractor.__get_property_value(line))
                 elif line.startswith('---- cou') and index == 2:
-                    estudante.curso_nome = ControllerEstudante.__get_property_value(line)
+                    estudante.curso_nome = EstudanteExtractor.__get_property_value(line)
                 elif line.startswith('---- in') and index == 3:
-                    estudante.instituicao_id = int(ControllerEstudante.__get_property_value(line))
+                    estudante.instituicao_id = int(EstudanteExtractor.__get_property_value(line))
                 elif line.startswith('---- in') and index == 4:
-                    estudante.instituicao_nome = ControllerEstudante.__get_property_value(line)
+                    estudante.instituicao_nome = EstudanteExtractor.__get_property_value(line)
                 elif line.startswith('---- hi'):
-                    estudante.escola_nome = ControllerEstudante.__get_property_value(line)
+                    estudante.escola_nome = EstudanteExtractor.__get_property_value(line)
                 elif line.startswith('---- sch'):
-                    estudante.escola_tipo = ControllerEstudante.__get_property_value(line)
+                    estudante.escola_tipo = EstudanteExtractor.__get_property_value(line)
                 elif line.startswith('---- shi'):
-                    estudante.escola_turno = ControllerEstudante.__get_property_value(line)
+                    estudante.escola_turno = EstudanteExtractor.__get_property_value(line)
                 elif line.startswith('---- gr'):
-                    estudante.escola_ano_grad = int(ControllerEstudante.__get_property_value(line))
+                    estudante.escola_ano_grad = int(EstudanteExtractor.__get_property_value(line))
                 elif line.startswith('---- sex'):
-                    estudante.sexo = ControllerEstudante.__get_property_value(line)
+                    estudante.sexo = EstudanteExtractor.__get_property_value(line)
                 elif line.startswith('---- year o'):
-                    estudante.ano_nascimento = int(ControllerEstudante.__get_property_value(line))
+                    estudante.ano_nascimento = int(EstudanteExtractor.__get_property_value(line))
                 elif line.startswith('---- civ'):
-                    estudante.estado_civil = ControllerEstudante.__get_property_value(line)
+                    estudante.estado_civil = EstudanteExtractor.__get_property_value(line)
                 elif line.startswith('---- hav'):
-                    estudante.tem_filhos = True if ControllerEstudante.__get_property_value(line) == 'yes' else False
+                    estudante.tem_filhos = True if EstudanteExtractor.__get_property_value(line) == 'yes' else False
 
     @staticmethod
     def __get_property_value(text: str):
@@ -280,7 +286,6 @@ class ControllerEstudante:
         :type turma: Turma
         :return: Lista de Estudantes encontrados para aquela Turma, :class:`Estudante`.
         """
-        estudantes = []
         # coleta todas os arquivos/pastas no diretório de 'estudantes' informado
         with os.scandir(f'{turma.path}/users') as entries:
             for entry in entries:
@@ -294,12 +299,11 @@ class ControllerEstudante:
                             int(entry.name),
                             entry.path,
                         )
-                        ControllerEstudante.__get_data_from_file(f'{entry.path}/user.data', estudante)
-                        estudantes.append(estudante)
+                        EstudanteExtractor.__get_data_from_file(f'{entry.path}/{EstudanteExtractor.__estudante_file_name}', estudante)
+                        turma.estudantes.append(estudante)
                     except Exception:
                         Logger.error(f'Erro ao recuperar dados do estudante: {entry.path}')
                         # Util.wait_user_input()
-        return estudantes
 
     @staticmethod
     def save_estudantes(estudantes: List[Estudante], path: str):
@@ -318,10 +322,16 @@ class ControllerEstudante:
                 writter.writerow(estudante.get_row())
 
 
-class ControllerExecucao:
+class ExecucaoExtractor:
+
+    # in seconds
+    __inactivity_threshold__ = 300
+
+    __log_extension = '.log'
+    __code_extension = '.py'
 
     @staticmethod
-    def __get_code_metrics(path: str, execucao: Execucao):
+    def __extract_code_metrics(path: str, execucao: Execucao):
         """
         Recupera as métricas de código da última solução submetida por um Estudante, nas tentativa de resolver um exercício.
         Salva as métricas encontradas no objeto 'execucao'.
@@ -332,45 +342,52 @@ class ControllerExecucao:
         :type execucao: Execucao
         """
         with open(path) as f:
-            lines = f.readlines()
-            codigo = ''.join(lines)
+            codigo = ''.join(f.readlines())
 
-            v = ComplexityVisitor.from_code(codigo)
-            execucao.total_complexity = v.total_complexity
-            execucao.n_functions = len(v.functions)
-            execucao.n_classes = len(v.functions)
+            try:
+                v = ComplexityVisitor.from_code(codigo)
+                execucao.complexity = v.complexity
+                execucao.n_functions = len(v.functions)
+                execucao.n_classes = len(v.functions)
+            except Exception as e:
+                Logger.error(f'Não foi possível extrair métricas de complexidade: {path}')
 
-            a = analyze(codigo)
-            execucao.loc = a.loc
-            execucao.lloc = a.lloc
-            execucao.sloc = a.sloc
-            execucao.blank = a.blank
-            execucao.multi = a.multi
-            execucao.comments = a.comments
-            execucao.single_comments = a.single_comments
+            try:
+                a = analyze(codigo)
+                execucao.loc = a.loc
+                execucao.lloc = a.lloc
+                execucao.sloc = a.sloc
+                execucao.blank_lines = a.blank
+                execucao.multilines = a.multi
+                execucao.comments = a.comments
+                execucao.single_comments = a.single_comments
+            except Exception as e:
+                Logger.error(f'Não foi possível extrair métricas de código: {path}')
 
-            h = h_visit(codigo)
-            execucao.h1 = h.total.h1
-            execucao.h2 = h.total.h2
-            execucao.N1 = h.total.N1
-            execucao.N2 = h.total.N2
-            execucao.vocabulary = h.total.vocabulary
-            execucao.length = h.total.length
-            execucao.calculated_length = h.total.calculated_length
-            execucao.volume = h.total.volume
-            execucao.difficulty = h.total.difficulty
-            execucao.effort = h.total.effort
-            execucao.bugs = h.total.bugs
-            execucao.time = h.total.time
+            try:
+                h = h_visit(codigo)
+                execucao.h1 = h.total.h1
+                execucao.h2 = h.total.h2
+                execucao.N1 = h.total.N1
+                execucao.N2 = h.total.N2
+                execucao.vocabulary = h.total.vocabulary
+                execucao.length = h.total.length
+                execucao.calculated_length = h.total.calculated_length
+                execucao.volume = h.total.volume
+                execucao.difficulty = h.total.difficulty
+                execucao.effort = h.total.effort
+                execucao.bugs = h.total.bugs
+                execucao.time = h.total.time
+            except Exception as e:
+                Logger.error(f'Não foi possível extrair métricas de software: {path}')
 
-            lines.clear()
-            del lines
+            del codigo
 
     @staticmethod
-    def __get_solution_interval(path: str, execucao: Execucao):
+    def __extract_solution_interval(path: str, execucao: Execucao, atividade: Atividade):
         """
-        Recupera as datas de início e término da tentativa de solucionar um exercício, obtidas a partir do arquivo de 'log' do CodeMirror.
-        Salva essas datas no objeto 'execucao'.
+        Calcula o tempo de solução do exercício utilizando como limites os intervalos definido na Atividade.
+
 
         :param path: Caminho absoluto do arquivo de 'log' com as informações do CodeMirror.
         :type path: str
@@ -378,35 +395,48 @@ class ControllerExecucao:
         :type execucao: Execucao
         """
         with open(path, 'r') as f:
-            lines = f.readlines()
+            at_dti = datetime.strptime(atividade.data_inicio, '%Y-%m-%d %H:%M')
+            at_dtf = datetime.strptime(atividade.data_termino, '%Y-%m-%d %H:%M')
 
-            i = 0
-            while True:
-                m = re.search(
-                    r'^((\d{4})-(\d{1,2})-(\d{1,2})) ((\d{2}):(\d{2}):(\d{2}).(\d{3}))',
-                    lines[i]
-                )
-                if m:
-                    execucao.data_inicio = m.group(0)
-                    break
-                i += 1
+            execucao.tempo_solucao = 0
+            execucao.tempo_interacao = 0
+            dti = None
+            line = f.readline()
+            while line:
+                try:
+                    dt, _, event = line.partition('#')
+                    event, _, msg = event.partition('#')
+                    temp_dt = datetime.strptime(dt[:-4], '%Y-%m-%d %H:%M:%S')
 
-            i = -1
-            while True:
-                m = re.search(
-                    r'^((\d{4})-(\d{1,2})-(\d{1,2}) (\d{2}):(\d{2}):(\d{2}).(\d{3}))#submit#Congratulations, your code is correct!',
-                    lines[i]
-                )
-                if m:
-                    execucao.data_termino = m.group(0)
-                    break
-                i -= 1
+                    if temp_dt < at_dti or temp_dt > at_dtf:
+                        line = f.readline()
+                        continue
 
-            lines.clear()
-            del lines
+                    if event == 'blur':
+                        dti = None
+                        line = f.readline()
+                        continue
+                    elif event == 'focus':
+                        dti = temp_dt
+                        line = f.readline()
+                        continue
+
+                    if dti:
+                        seconds = (temp_dt - dti).total_seconds()
+                        if seconds < ExecucaoExtractor.__inactivity_threshold__:
+                            execucao.tempo_solucao += seconds
+                        execucao.tempo_interacao += seconds
+                        dti = temp_dt
+
+                    if event == 'submit' and msg.startswith('Congrat'):
+                        break
+                except Exception as e:
+                    pass
+
+                line = f.readline()
 
     @staticmethod
-    def __get_submissions(path: str, execucao: Execucao):
+    def __extract_submissions_count(path: str, execucao: Execucao):
         """
         Recupera as informações de submissões, testes e erros do arquivo de 'log' das tentativas de solução de um exercício.
         Salvas as informações, encontradas no arquivo, no objeto 'execucao' passado como parametro.
@@ -414,46 +444,41 @@ class ControllerExecucao:
         :param path: Caminho absoluto do arquivo de 'log' com as informações das execuções feitas pelo estudante.
         :type path: str
         :param execucao: Objeto que irá armazenar as informações obtidas do arquivo de 'log' do Codebench, :class:`Execucao`.
-        :type execucao: Execucao
+        :type execucao: model.Execucao
+        :return first_correct_sub_date: Data e Hora da primeira submissão correta feita pelo Estudante, se não houver retorna 'None'.
         """
         with open(path, 'r') as f:
-            achou_nota = False
             erros = []
-
-            if not execucao.n_submissoes:
-                execucao.n_submissoes = 0
-            if not execucao.n_testes:
-                execucao.n_testes = 0
-            if not execucao.n_erros:
-                execucao.n_erros = 0
-
-            for line in f.readlines():
-                line = line.strip()
-
-                if achou_nota:
-                    try:
-                        execucao.nota_final = float(line[:-1])
-                        execucao.acertou = True if execucao.nota_final > 99.99 else False
-                    except TypeError:
-                        Logger.error(f'Erro ao tentar obter nota do estudante, na linha: {line}')
-                    except ValueError:
-                        Logger.error(f'Erro ao tentar obter nota do estudante, na linha: {line}')
-                    achou_nota = False
-
+            execucao.n_submissoes = 0
+            execucao.n_testes = 0
+            execucao.n_erros = 0
+            line = f.readline()
+            while line:
                 if line.startswith('== S'):
                     execucao.n_submissoes += 1
+                    if not (execucao.nota_final and execucao.acertou):
+                        grade_line = f.readline()
+                        while grade_line and not (grade_line.startswith('-- GRADE') or grade_line.startswith('*-*')):
+                            grade_line = f.readline()
+                        try:
+                            grade_line = f.readline().strip()
+                            execucao.nota_final = float(grade_line.replace('%', ''))
+                            execucao.acertou = False if execucao.nota_final < 100.0 else True
+                        except Exception:
+                            pass
                 elif line.startswith('== T'):
                     execucao.n_testes += 1
                 elif line.startswith('-- ER'):
                     execucao.n_erros += 1
-                elif line.startswith('-- GRAD'):
-                    achou_nota = True
                 elif re.search(r"^([\w_\.]+Error)", line):
                     m = re.match(r"^([\w_\.]+Error)", line)
                     if m:
                         erros.append(m.group(0))
+
+                line = f.readline()
+
             if len(erros):
-                Util.register_errors(erros)
+                Util.register_errors(erros, execucao)
 
     @staticmethod
     def get_execucoes(estudante: Estudante):
@@ -467,41 +492,43 @@ class ControllerExecucao:
         :type estudante: Estudante
         :return: Todas as execuções realizadas por um estudante, para as questões selecionadas em atividades que o estudante resolveu, :py:class:`model.Execucao`.
         """
-        execucoes = []
+        atividades = {a.codigo: a for a in estudante.turma.atividades}
         # coleta todas os arquivos/pastas dentro do diretório de execuções do aluno
         with os.scandir(f'{estudante.path}/executions') as entries:
             for entry in entries:
                 # se a 'entrada' for um arquivo de extensão '.log', então corresponde as execuções de uma questão.
-                if entry.is_file() and entry.path.endswith('.log'):
+                if entry.is_file() and entry.path.endswith(ExecucaoExtractor.__log_extension):
                     Logger.debug(f'Arquivo de execução: {entry.path}')
 
                     # divide o nome do arquivo obtendo os códigos da atividade e exercício.
-                    aid, eid, *_ = entry.name[:-4].split('_')
+                    aid, eid, *_ = entry.name.replace(ExecucaoExtractor.__log_extension, '').split('_')
                     execucao = Execucao(
                         estudante.periodo.descricao,
-                        estudante.turma.id,
-                        estudante.id,
+                        estudante.turma.codigo,
+                        estudante.codigo,
                         int(aid),
                         int(eid)
                     )
 
                     try:
-                        ControllerExecucao.__get_submissions(entry.path, execucao)
-                    except Exception:
+                        ExecucaoExtractor.__extract_submissions_count(entry.path, execucao)
+                    except Exception as e:
                         Logger.error(f'Erro ao obter dados das submissões da execução: {entry.path}')
 
                     try:
-                        ControllerExecucao.__get_solution_interval(f'{estudante.path}/codemirror/{entry.name}', execucao)
-                    except Exception:
+                        atividade = atividades.get(execucao.atividade, None)
+                        ExecucaoExtractor.__extract_solution_interval(f'{estudante.path}/codemirror/{entry.name}', execucao, atividade)
+                    except Exception as e:
                         Logger.error(f'Erro ao obter dados do intervalo de solução da execução: {estudante.path}/codemirror/{entry.name}')
 
+                    code_file_name = entry.name.replace(ExecucaoExtractor.__log_extension,
+                                                        ExecucaoExtractor.__code_extension)
                     try:
-                        ControllerExecucao.__get_code_metrics(f'{estudante.path}/codes/{entry.name[:-4]}.py', execucao)
-                    except Exception:
-                        Logger.error(f'Erro ao obter métricas de código da execução: {estudante.path}/codes/{entry.name[:-4]}.py')
+                        ExecucaoExtractor.__extract_code_metrics(f'{estudante.path}/codes/{code_file_name}', execucao)
+                    except Exception as e:
+                        Logger.error(f'Erro ao obter métricas de código da execução: {estudante.path}/codes/{code_file_name}')
 
-                    execucoes.append(execucao)
-        return execucoes
+                    estudante.execucoes.append(execucao)
 
     @staticmethod
     def save_execucoes(execucoes: List[Execucao], path: str):
@@ -520,7 +547,9 @@ class ControllerExecucao:
                 writter.writerow(execucao.get_row())
 
 
-class ControllerSolucao:
+class SolucaoExtractor:
+
+    __solution_extension = '.code'
 
     @staticmethod
     def get_metricas(path: str):
@@ -532,103 +561,112 @@ class ControllerSolucao:
         :type path: str
         :return: Matriz com as métricas extraídas de cada solução
         """
-        metricas_solucoes = []
+        solucoes = []
         # coleta todas os arquivos/pastas dentro do diretório de execuções do aluno
         with os.scandir(f'{path}') as entries:
             for entry in entries:
                 # se a 'entrada' for um arquivo de extensão '.log', então corresponde as execuções de uma questão.
-                if entry.is_file() and entry.path.endswith('.code'):
+                if entry.is_file() and entry.path.endswith(SolucaoExtractor.__solution_extension):
                     Logger.debug(f'Arquivo de solução do professor: {entry.path}')
                     try:
-                        metricas = ControllerSolucao.__get_metricas(entry.path)
-                        metricas.append(str(entry.name[:-4]))
-                        metricas_solucoes.append(metricas)
+                        solucao = Solucao(int(entry.name.replace(SolucaoExtractor.__solution_extension, '')))
+                        SolucaoExtractor.__get_metricas(entry.path, solucao)
+                        solucoes.append(solucao)
                     except Exception:
                         Logger.error(f'Erro ao recuperar métricas da solução: {entry.path}')
                         # Util.wait_user_input()
-        return metricas_solucoes
+        return solucoes
 
     @staticmethod
-    def save_metricas(metricas: List, path: str):
+    def save_metricas(metricas: List[Solucao], path: str):
         """
-        Salva a lista de métricas das soluções num arquivo no formato CSV.
+        Salva a lista de métricas de soluções num arquivo no formato CSV.
 
         :param metricas: Lista de Métricas a serem salvas.
         :type metricas: list
         :param path: Caminho absoluto do arquivo CSV onde as métricas devem ser salvas.
         :type path: str
         """
-        Logger.info(f'Salvando métricas dos professores no arquivo: {path}')
-        with open(path, 'w') as file:
+        Logger.info(f'Salvando métricas de soluções no arquivo: {path}')
+        with open(path, 'a') as file:
             # cabeçalho do arquivo 'csv'
-            file.write(Metricas.get_columns() + ',exercicio' + os.linesep)
             writter = csv.writer(file)
             for m in metricas:
-                writter.writerow(m)
+                writter.writerow(m.get_row())
 
     @staticmethod
-    def __get_metricas(path: str):
+    def __get_metricas(path: str, solucao: Solucao):
         """
-        Retorna uma lista com diversas métricas (McCabe's complexity, Halstead e Métricas Brutas) de um arquivo de código-fonte.
+        Recupera as métricas (McCabe's complexity, Halstead e Métricas Brutas) de um arquivo de código-fonte Python.
+        O arquivo é uma possível solução, elaborada por um Instrutor, para um Exercício utilizado nas Atividades.
 
-        McCabe's
-            - Complexidade Total
-            - Quantidade de Funções
-            - Quantidade de Classes
-        Métricas Brutas
-            - Número Total de Linhas (LOC)
-            - Número de Linhas Lógicas de Código (LLOC)
-            - Número de Linhas de Código (SLOC)
-            - Número de Comentários
-            - Número de Multi-line Strings
-            - Número de Comentários Simples
-            - Número de Linhas em Branco
-        Halstead
-            - Número de Operadores Distintos (h1)
-            - Número de Operandos Distintos (h2)
-            - Número Total de Operadores (N1)
-            - Número Total de Operandos (N2)
-            - Vocabulário (h = h1 + h2)
-            - Tamanho (N = N1 + N2)
-            - Tamanho Calculado (h1 * log2(h1) + h2 * log2(h2))
-            - Volume (V = N * log2(h))
-            - Dificuldade (D = h1/2 * N2/h2)
-            - Esforço (E = D * V)
-            - Tempo (T = E / 18 segundos)
-            - Bugs (B = V / 3000), estivativa de erros na implementação
+        McCabe's (Complexidade)
+            - complexity: Complexidade Total
+            - n_classes: Quantidade de Classes
+            - n_functions: Quantidade de Funções
+        Métricas Brutas (Código)
+            - loc: Número Total de Linhas
+            - lloc: Número de Linhas Lógicas de Código
+            - sloc: Número de Linhas de Código
+            - comments: Número de Comentários
+            - single_comments: Número de Comentários Simples
+            - multilines: Número de Multi-line Strings
+            - blank_lines: Número de Linhas em Branco
+        Halstead (Métricas de SW)
+            - h1: Número de Operadores Distintos
+            - h2: Número de Operandos Distintos
+            - N1: Número Total de Operadores
+            - N2: Número Total de Operandos
+            - vocabulary: Vocabulário (h = h1 + h2)
+            - length: Tamanho (N = N1 + N2)
+            - calculated_length: Tamanho Calculado (h1 * log2(h1) + h2 * log2(h2))
+            - volume: Volume (V = N * log2(h))
+            - difficulty: Dificuldade (D = h1/2 * N2/h2)
+            - effort: Esforço (E = D * V)
+            - time: Tempo (T = E / 18 segundos)
+            - bugs: Bugs (B = V / 3000), estivativa de erros na implementação
 
         :param path: String com o caminho absoluto para o arquivo de código-fonte.
         :type path: str
-        :return: Lista com as métricas obtidas.
+        :param solucao: Objeto :class:`model.Solucao` que irá armazenar as métricas
+        :type solucao: model.Solucao
         """
         with open(path) as f:
-            lines = f.readlines()
-            codigo = ''.join(lines)
-            v = ComplexityVisitor.from_code(codigo)
-            a = analyze(codigo)
-            h = h_visit(codigo)
+            codigo = ''.join(f.readlines())
 
-            return [
-                v.total_complexity,
-                len(v.functions),
-                len(v.classes),
-                a.loc,
-                a.lloc,
-                a.sloc,
-                a.comments,
-                a.multi,
-                a.single_comments,
-                a.blank,
-                h.total.h1,
-                h.total.h2,
-                h.total.N1,
-                h.total.N2,
-                h.total.vocabulary,
-                h.total.length,
-                h.total.calculated_length,
-                h.total.volume,
-                h.total.difficulty,
-                h.total.effort,
-                h.total.bugs,
-                h.total.time
-            ]
+            try:
+                v = ComplexityVisitor.from_code(codigo)
+                solucao.complexity = v.complexity
+                solucao.n_classes = len(v.classes)
+                solucao.n_functions = len(v.functions)
+            except Exception as e:
+                Logger.error(f'Não foi possível extrair métricas de complexidade: {path}')
+
+            try:
+                a = analyze(codigo)
+                solucao.loc = a.loc
+                solucao.lloc = a.lloc
+                solucao.sloc = a.sloc
+                solucao.comments = a.comments
+                solucao.single_comments = a.single_comments
+                solucao.multilines = a.multi
+                solucao.blank_lines = a.blank
+            except Exception as e:
+                Logger.error(f'Não foi possível extrair métricas de código: {path}')
+
+            try:
+                h = h_visit(codigo)
+                solucao.h1 = h.total.h1
+                solucao.h2 = h.total.h2
+                solucao.N1 = h.total.N1
+                solucao.N2 = h.total.N2
+                solucao.vocabulary = h.total.vocabulary
+                solucao.length = h.total.length
+                solucao.calculated_length = h.total.calculated_length
+                solucao.volume = h.total.volume
+                solucao.difficulty = h.total.difficulty
+                solucao.effort = h.total.effort
+                solucao.bugs = h.total.bugs
+                solucao.time = h.total.time
+            except Exception as e:
+                Logger.error(f'Não foi possível extrair métricas de software: {path}')

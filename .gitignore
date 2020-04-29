@@ -1,11 +1,10 @@
 .idea/
 csv/
-dataset/
+cb_dataset_v1.10/
 solutions/
 logs/
 docs/
 
-*.pdf
 *.pyc
 
 model/__pycache/*.pyc
@@ -13,3 +12,4 @@ util/__pycache/*.pyc
 
 extract_solutions.py
 radon_exemplo.py
+test.py

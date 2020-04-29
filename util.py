@@ -1,5 +1,9 @@
 import os
+import shutil
 import logging
+import csv
+
+from model import *
 
 from collections import Counter
 
@@ -19,20 +23,65 @@ class Util:
         os.system('clear')
 
     @staticmethod
-    def register_errors(error_list):
+    def register_errors(error_list, execucao: Execucao):
         error_names = Counter(error_list).keys()
         error_count = Counter(error_list).values()
 
-        for name, count in zip(error_names, error_count):
-            if name in Util.__error_names:
-                Util.__error_count[Util.__error_names.index(name)] += count
-            else:
-                Util.__error_names.append(name)
-                Util.__error_count.append(count)
+        with open(f'{os.getcwd()}/csv/erros.csv', 'a') as f:
+            writter = csv.writer(f)
+            for name, count in zip(error_names, error_count):
+                writter.writerow([
+                    execucao.periodo,
+                    execucao.turma,
+                    execucao.atividade,
+                    execucao.estudante,
+                    execucao.exercicio,
+                    name,
+                    count
+                ])
 
     @staticmethod
     def get_unique_errors():
         return zip(Util.__error_names, Util.__error_count)
+
+    @staticmethod
+    def create_output_dir(output_path):
+        # diretório dos datasets de saída
+        try:
+            if os.path.exists(output_path):
+                shutil.rmtree(output_path)
+
+            os.mkdir(output_path)
+
+            with open(f'{output_path}/periodos.csv', 'w') as f:
+                header = ','.join(Periodo.get_attr_names()) + os.linesep
+                f.write(header)
+
+            with open(f'{output_path}/turmas.csv', 'w') as f:
+                header = ','.join(Turma.get_attr_names()) + os.linesep
+                f.write(header)
+
+            with open(f'{output_path}/atividades.csv', 'w') as f:
+                header = ','.join(Atividade.get_attr_names()) + os.linesep
+                f.write(header)
+
+            with open(f'{output_path}/estudantes.csv', 'w') as f:
+                header = ','.join(Estudante.get_attr_names()) + os.linesep
+                f.write(header)
+
+            with open(f'{output_path}/execucoes.csv', 'w') as f:
+                header = ','.join(Execucao.get_attr_names()) + os.linesep
+                f.write(header)
+
+            with open(f'{output_path}/solucoes.csv', 'w') as f:
+                header = ','.join(Solucao.get_attr_names()) + os.linesep
+                f.write(header)
+
+            with open(f'{output_path}/erros.csv', 'w') as f:
+                f.write(','.join(Erros.get_attr_names()) + os.linesep)
+
+        except OSError:
+            Logger.error('Erro ao criar diretório de saída!')
 
 
 class Logger:
@@ -46,32 +95,28 @@ class Logger:
     def configure():
         logging.basicConfig(level=logging.DEBUG)
 
-        try:
+        if not os.path.exists(Logger.__path):
             os.mkdir(Logger.__path)
-        except Exception as e:
-            print(str(e))
 
         Logger.configure_debugger()
         Logger.configure_info()
         Logger.configure_warn()
         Logger.configure_error()
 
-        Logger.info('Logging configurado')
-
     @staticmethod
-    def debug(msg):
+    def debug(msg: str):
         Logger.__debug.debug(msg)
 
     @staticmethod
-    def info(msg):
+    def info(msg: str):
         Logger.__info.info(msg)
 
     @staticmethod
-    def warn(msg):
+    def warn(msg: str):
         Logger.__warn.warning(msg)
 
     @staticmethod
-    def error(msg):
+    def error(msg: str):
         Logger.__error.error(msg, exc_info=True)
 
     @staticmethod
@@ -95,11 +140,11 @@ class Logger:
             Logger.__info = logging.getLogger('info')
             formatter = logging.Formatter('%(asctime)s %(name)s [%(levelname)s]: %(message)s')
 
-            console_handler = logging.StreamHandler()
-            console_handler.setLevel(logging.INFO)
-            console_handler.setFormatter(formatter)
+            file_handler = logging.FileHandler(f'{Logger.__path}/info.log')
+            file_handler.setLevel(logging.INFO)
+            file_handler.setFormatter(formatter)
 
-            Logger.__info.addHandler(console_handler)
+            Logger.__info.addHandler(file_handler)
 
     @staticmethod
     def configure_warn():
@@ -111,12 +156,7 @@ class Logger:
             file_handler.setLevel(logging.WARNING)
             file_handler.setFormatter(formatter)
 
-            console_handler = logging.StreamHandler()
-            console_handler.setLevel(logging.WARNING)
-            console_handler.setFormatter(formatter)
-
             Logger.__warn.addHandler(file_handler)
-            Logger.__warn.addHandler(console_handler)
 
     @staticmethod
     def configure_error():
@@ -129,7 +169,9 @@ class Logger:
             file_handler.setLevel(logging.ERROR)
             file_handler.setFormatter(formatter)
 
+            console_handler = logging.StreamHandler()
+            console_handler.setLevel(logging.ERROR)
+            console_handler.setFormatter(formatter)
+
             Logger.__error.addHandler(file_handler)
-
-
-Logger.configure()
+            Logger.__error.addHandler(console_handler)
