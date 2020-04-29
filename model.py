@@ -250,16 +250,17 @@ class Solucao:
         ]
 
 
-class Erros:
+class Erro:
+
+    def __init__(self, name: str, count: int):
+        self.periodo = None
+        self.turma = None
+        self.atividade = None
+        self.estudante = None
+        self.exercicio = None
+        self.tipo = name
+        self.ocorrencias = count
 
     @staticmethod
     def get_attr_names():
-        return [
-            'periodo',
-            'turma',
-            'atividade',
-            'estudante',
-            'exercicio',
-            'erro',
-            'ocorrencias'
-        ]
+        return list(Erro('', 0).__dict__)

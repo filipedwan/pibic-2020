@@ -56,7 +56,7 @@ class PeriodoExtractor:
 
 class TurmaExtractor:
 
-    __atividade_file_extension = '.date'
+    __atividade_file_extension = '.data'
 
     @staticmethod
     def __get_turma_descricao(path: str, turma: Turma):
@@ -341,6 +341,7 @@ class ExecucaoExtractor:
         :param execucao: Objeto que irá armazenar as informações obtidas do arquivo de código fonte, :class:`Execucao`.
         :type execucao: Execucao
         """
+        #TODO: ao falhar lançar uma exceção
         with open(path) as f:
             codigo = ''.join(f.readlines())
 

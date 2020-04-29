@@ -41,10 +41,6 @@ class Util:
                 ])
 
     @staticmethod
-    def get_unique_errors():
-        return zip(Util.__error_names, Util.__error_count)
-
-    @staticmethod
     def create_output_dir(output_path):
         # diretório dos datasets de saída
         try:
@@ -78,7 +74,7 @@ class Util:
                 f.write(header)
 
             with open(f'{output_path}/erros.csv', 'w') as f:
-                f.write(','.join(Erros.get_attr_names()) + os.linesep)
+                f.write(','.join(Erro.get_attr_names()) + os.linesep)
 
         except OSError:
             Logger.error('Erro ao criar diretório de saída!')
