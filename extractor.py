@@ -15,6 +15,7 @@ class CodebenchExtractor:
     """
     Classe Extratora das Entidades do dataset Codebench
     """
+
     # extensão dos arquivos de informações das 'Atividades' de uma 'Turma'
     __atividade_file_extension = '.data'
     # nome do arquivo de informações de 'Estudante'

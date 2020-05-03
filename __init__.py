@@ -22,32 +22,32 @@ def main():
     # recupera a lista de 'Periodos' dentro da pasta do dataset Codebench
     periodos = CodebenchExtractor.extract_periodos(__dataset_dir__)
     # os 'Periodos' são então salvos no arquivo '.csv'
-    #CSVParser.salvar_periodos(periodos)
+    CSVParser.salvar_periodos(periodos)
 
     for periodo in periodos:
         # extrai as 'Turmas' para o 'Período'
         CodebenchExtractor.extract_turmas(periodo)
         # salva as 'Turmas' no arquivo .'csv'
-        #CSVParser.salvar_turmas(periodo.turmas)
+        CSVParser.salvar_turmas(periodo.turmas)
         for turma in periodo.turmas:
             # extrai as 'Atividades' da 'Turma'
             CodebenchExtractor.extract_atividades(turma)
             # salva as 'Atividades' no arquivo '.csv'
             CSVParser.salvar_atividades(turma.atividades)
             # extrai os 'Estudantes' da 'Turma'
-            # CodebenchExtractor.extract_estudantes(turma)
+            CodebenchExtractor.extract_estudantes(turma)
             # salva os 'Estudantes' no arquivo '.csv'
-            #CSVParser.salvar_estudantes(turma.estudantes)
-            #for estudante in turma.estudantes:
+            CSVParser.salvar_estudantes(turma.estudantes)
+            for estudante in turma.estudantes:
                 # extrai as 'Execuções' do 'Estudante'
-                #CodebenchExtractor.extract_execucoes(estudante)
+                CodebenchExtractor.extract_execucoes(estudante)
                 # salva as 'Execuções' no arquivo '.csv'
-                #CSVParser.salvar_execucoes(estudante.execucoes)
+                CSVParser.salvar_execucoes(estudante.execucoes)
 
     # extrai as métricas das 'Soluções' propostas pelos professores
-    #solucoes = CodebenchExtractor.extract_solucoes(f'{__cwd__}/solutions')
+    solucoes = CodebenchExtractor.extract_solucoes(f'{__cwd__}/solutions')
     # salva as 'Soluções'  no arquivo '.csv'
-    #CSVParser.salvar_solucoes(solucoes)
+    CSVParser.salvar_solucoes(solucoes)
 
 
 if __name__ == '__main__':
