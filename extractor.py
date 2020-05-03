@@ -383,40 +383,42 @@ class CodebenchExtractor:
             execucao.t_interacao = timedelta(0)
 
             # percorremos o arquivo de log até os eventos terem um datetime maior que o do inicio da atividade
-            line = f.readline()
-            while line:
+            lines = f.readlines()
+            i = 0
+            size = len(lines)
+            while i < size:
                 try:
-                    start_datetime, _, _ = CodebenchExtractor.__get_event_info(line)
+                    start_datetime, _, _ = CodebenchExtractor.__get_event_info(lines[i])
                     if start_datetime >= at_dti:
                         break
                 except Exception:
                     pass
-                line = f.readline()
+                i += 1
 
-            while line:
+            while i < size:
                 end_datetime = None
 
                 # buscamos então o evento de focus
-                while line:
-                    line = f.readline()
+                while i < size:
+                    i += 1
                     try:
-                        start_datetime, event_name, _ = CodebenchExtractor.__get_event_info(line)
+                        start_datetime, event_name, _ = CodebenchExtractor.__get_event_info(lines[i])
                         if event_name == 'focus':
                             break
                         # se o evento for uma 'sumissão' correta ou o datetime do evento for maior que o datetime de termino da atividade
                         # finalizamos o calculo do tempo de solução
                         if event_name == 'submit' and event_msg.startswith('Congr'):
                             start_datetime = None
-                            line = ''
+                            i = size
                     except Exception:
                         pass
 
                 # efetuamos o somatório dos intervalos enquanto o editor do CodeMirror possuir foco
-                while line:
-                    line = f.readline()
+                while i < size:
+                    i += 1
                     try:
                         # se temos o datetime de um evento anterior, podemos calcular o intervalo de tempo entre os eventos
-                        end_datetime, event_name, event_msg = CodebenchExtractor.__get_event_info(line)
+                        end_datetime, event_name, event_msg = CodebenchExtractor.__get_event_info(lines[i])
                         if event_name == 'blur':
                             break
                     except Exception:
