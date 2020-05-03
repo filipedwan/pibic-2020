@@ -30,18 +30,18 @@ class CSVParser:
         """Cria a pasta e os arquivos de saídas '.csv' (datasets)."""
         try:
             # se o diretório de saída existir, apaga seu conteúdo
-            if os.path.exists(CSVParser.__output_dir):
-                shutil.rmtree(CSVParser.__output_dir)
+            #if os.path.exists(CSVParser.__output_dir):
+            #    shutil.rmtree(CSVParser.__output_dir)
             # cria o diretório de saída
-            os.mkdir(CSVParser.__output_dir)
+            #os.mkdir(CSVParser.__output_dir)
             # cria todos os arquivos de saída '.csv' (datasets)
-            CSVParser.__create_csv_file(CSVParser.__periodos_csv, Periodo.get_csv_header())
-            CSVParser.__create_csv_file(CSVParser.__turmas_csv, Turma.get_csv_header())
+            #CSVParser.__create_csv_file(CSVParser.__periodos_csv, Periodo.get_csv_header())
+            #CSVParser.__create_csv_file(CSVParser.__turmas_csv, Turma.get_csv_header())
             CSVParser.__create_csv_file(CSVParser.__atividades_csv, Atividade.get_csv_header())
-            CSVParser.__create_csv_file(CSVParser.__estudantes_csv, Estudante.get_csv_header())
-            CSVParser.__create_csv_file(CSVParser.__execucoes_csv, Execucao.get_csv_header())
-            CSVParser.__create_csv_file(CSVParser.__solucoes_csv, Solucao.get_csv_header())
-            CSVParser.__create_csv_file(CSVParser.__erros_csv, Erro.get_csv_header())
+            #CSVParser.__create_csv_file(CSVParser.__estudantes_csv, Estudante.get_csv_header())
+            #CSVParser.__create_csv_file(CSVParser.__execucoes_csv, Execucao.get_csv_header())
+            #CSVParser.__create_csv_file(CSVParser.__solucoes_csv, Solucao.get_csv_header())
+            #CSVParser.__create_csv_file(CSVParser.__erros_csv, Erro.get_csv_header())
         except OSError:
             Logger.error('Erro ao criar diretório de saída!')
 

@@ -33,7 +33,7 @@ class Periodo(CSVEntity):
 
     @staticmethod
     def get_csv_header():
-        return list(Periodo(None, None).__dict__)[:1]
+        return list(Periodo(None, None).__dict__)[:-2]
 
 
 class Turma(CSVEntity):
@@ -63,7 +63,7 @@ class Turma(CSVEntity):
 
     @staticmethod
     def get_csv_header():
-        return list(Turma(Periodo(None, None), 0, None).__dict__)[:3]
+        return list(Turma(Periodo(None, None), 0, None).__dict__)[:-3]
 
 
 class Atividade(CSVEntity):
@@ -107,7 +107,7 @@ class Atividade(CSVEntity):
 
     @staticmethod
     def get_csv_header():
-        return list(Atividade(Turma(Periodo('', ''), 0, ''), 0, '').__dict__)[:10]
+        return list(Atividade(Turma(Periodo('', ''), 0, ''), 0, '').__dict__)[:-1]
 
 
 class Estudante(CSVEntity):
@@ -161,7 +161,7 @@ class Estudante(CSVEntity):
 
     @staticmethod
     def get_csv_header() -> List[str]:
-        return list(Estudante(None, None, 0, '').__dict__)[:15]
+        return list(Estudante(None, None, 0, '').__dict__)[:-2]
 
 
 class Execucao(CSVEntity):
@@ -178,6 +178,7 @@ class Execucao(CSVEntity):
         - Métricas de Software (Halstead).
         - Métricas Brutas de Código.
     """
+
     def __init__(self, periodo: Periodo, turma: Turma, estudante: Estudante, atividade: Atividade, exercicio_codigo: int):
         """
         Método Construtor.
@@ -256,6 +257,7 @@ class Solucao(CSVEntity):
         - Métricas de Software (Halstead).
         - Métricas Brutas de Código.
     """
+
     def __init__(self, codigo: int):
         """
         Método Construtor
